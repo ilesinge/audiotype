@@ -71,7 +71,7 @@ function setup() {
 
 	// Create sliders with saved values
 	let yPos = 50;
-	createSliderWithLabel('factor', 'Factor', 0, 0.4, 0.07, 0.01, yPos, genType);
+	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.07, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Size', 0, 800, 100, 1, yPos);
 	yPos += 25;
@@ -95,9 +95,9 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('timeoffset', 'Time Offset (ms)', -100, 100, -30, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('strokepower', 'Stroke Power', 0.5, 5, 2, 0.1, yPos);
+	createSliderWithLabel('strokepower', 'Stroke Power', 0.5, 10, 2, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sizepower', 'Size Power', 0.5, 5, 2, 0.1, yPos);
+	createSliderWithLabel('sizepower', 'Size Power', 0.5, 10, 2, 0.1, yPos);
 	yPos += 25;
 	createSliderWithLabel('quantize', 'Quantize (0=off)', 0, 20, 0, 1, yPos);
 	yPos += 25;
