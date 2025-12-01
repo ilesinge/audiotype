@@ -1,0 +1,9 @@
+- Adjust sound reactivity power
+- Save to URL params / or button to copy preset (URL)
+- choose other color palettes options
+- upload own type
+- save as mp4 for embedding sound
+- audio reactive shape ???
+- bottom = bass, up = treble
+- select freq range
+- credit types
