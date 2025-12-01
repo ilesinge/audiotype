@@ -5,5 +5,5 @@
 - save as mp4 for embedding sound
 - audio reactive shape ???
 - bottom = bass, up = treble
-- select freq range
+- select freq range ( 2 params to getEnergy : https://github.com/processing/p5.js-sound/blob/main/src/fft.js#L125 )
 - credit types
