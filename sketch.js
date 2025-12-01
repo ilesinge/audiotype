@@ -1,5 +1,3 @@
-/*	_typo_textToPoints-circle // cc teddavis.org 2020	*/
-
 let fonts = {}
 let font, points
 let sliders = {}
@@ -18,10 +16,27 @@ let isDragging = false, lastMouseX, lastMouseY
 let isRecording = false, recordStartFrame = 0
 let recordButton
 let fontSelect
+let paletteSelect
+let colorPalettes = {
+	'RGB': [[255, 0, 0], [0, 255, 0], [0, 0, 255]], // #FF0000 #00FF00 #0000FF
+	'Monochrome': [[255, 255, 255], [150, 150, 150], [75, 75, 75]], // #FFFFFF #969696 #4B4B4B
+	'Neon': [[255, 0, 255], [0, 255, 255], [255, 255, 0]], // #FF00FF #00FFFF #FFFF00
+	'Retro': [[255, 111, 97], [255, 209, 102], [6, 214, 160]], // #FF6F61 #FFD166 #06D6A0
+	'Pastel': [[255, 179, 186], [255, 223, 186], [186, 255, 201]], // #FFB3BA #FFDFBA #BAFFC9
+	'Vaporwave': [[255, 113, 206], [1, 247, 161], [127, 199, 255]], // #FF71CE #01F7A1 #7FC7FF
+	'Candy': [[255, 20, 147], [0, 255, 127], [255, 165, 0]], // #FF1493 #00FF7F #FFA500
+	'Electric': [[148, 0, 211], [255, 0, 0], [0, 255, 0]], // #9400D3 #FF0000 #00FF00
+	'Miami': [[255, 0, 128], [0, 255, 255], [255, 215, 0]], // #FF0080 #00FFFF #FFD700
+	'Autumn': [[255, 69, 0], [218, 165, 32], [139, 0, 139]], // #FF4500 #DAA520 #8B008B
+	'Twilight': [[72, 61, 139], [255, 105, 180], [255, 215, 0]], // #483D8B #FF69B4 #FFD700
+	'Arctic': [[0, 191, 255], [230, 230, 250], [255, 0, 255]], // #00BFFF #E6E6FA #FF00FF
+	'Desert': [[255, 69, 0], [255, 215, 0], [138, 43, 226]], // #FF4500 #FFD700 #8A2BE2
+	'Toxic': [[0, 255, 0], [255, 255, 0], [255, 0, 255]] // #00FF00 #FFFF00 #FF00FF
+}
 
 function preload() {
-	fonts.compagnon = loadFont("../fonts/Compagnon-Roman.otf")
-	fonts.vg5000 = loadFont("../fonts/VG5000-Regular_web.otf")
+	fonts.compagnon = loadFont("fonts/Compagnon-Roman.otf")
+	fonts.vg5000 = loadFont("fonts/VG5000-Regular_web.otf")
 	// Load saved font or default to compagnon
 	let savedFont = getItem('selectedFont');
 	let fontName = savedFont !== null ? savedFont : 'compagnon';
@@ -57,6 +72,12 @@ function setup() {
 	fontSelect = createSelect();
 	fontSelect.option('compagnon');
 	fontSelect.option('vg5000');
+	// Add any custom fonts that were uploaded previously
+	for (let name in fonts) {
+		if (name !== 'compagnon' && name !== 'vg5000') {
+			fontSelect.option(name);
+		}
+	}
 	fontSelect.selected(fontName);
 	fontSelect.position(70, 10);
 	fontSelect.style('color', 'white');
@@ -67,6 +88,30 @@ function setup() {
 		font = fonts[fontSelect.value()];
 		storeItem('selectedFont', fontSelect.value());
 		genType();
+	});
+
+	// Add font upload button
+	let fontUploadButton = createFileInput(handleFontFile);
+	fontUploadButton.position(310, 10);
+	fontUploadButton.style('color', 'white');
+	fontUploadButton.attribute('accept', '.otf,.ttf');
+	uiElements.push(fontUploadButton);
+
+	// Add color palette selector
+	let savedPalette = getItem('selectedPalette');
+	let paletteName = savedPalette !== null ? savedPalette : 'RGB';
+	paletteSelect = createSelect();
+	for (let name in colorPalettes) {
+		paletteSelect.option(name);
+	}
+	paletteSelect.selected(paletteName);
+	paletteSelect.position(180, 10);
+	paletteSelect.style('color', 'white');
+	paletteSelect.style('background-color', '#222');
+	paletteSelect.style('border', '1px solid #555');
+	paletteSelect.style('font-family', 'monospace');
+	paletteSelect.changed(() => {
+		storeItem('selectedPalette', paletteSelect.value());
 	});
 
 	// Create sliders with saved values
@@ -222,6 +267,7 @@ function setup() {
 	
 	// Store all UI elements for toggling
 	uiElements.push(fontSelect);
+	uiElements.push(paletteSelect);
 	uiElements.push(uploadButton);
 	uiElements.push(playButton);
 	uiElements.push(textInput);
@@ -318,6 +364,9 @@ function draw() {
 	// Base stroke weight from slider
 	let baseStrokeWeight = sliders.strokeweight.value();
 	
+	// Get current color palette
+	let palette = colorPalettes[paletteSelect.value()];
+	
 	// Draw all points
 	for(let i = 0; i < points.length; i++) {
 		let p = points[i]
@@ -328,21 +377,22 @@ function draw() {
 		// Phase offset: one third of a wavelength (2π/3) for each color (if enabled)
 		let phaseOffset = colorWaveOffsetCheckbox.checked() ? TWO_PI / 3 : 0;
 		
-		// Draw three colored circles with frequency-based modulation
-		// Original: stroke("#0000ffAA") - Blue from treble
-		s1 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value()) * sliders.sinsize.value()
-		drawColorCircle(p.x, p.y, s1, treble, 0, 0, 200, baseStrokeWeight);
-		
 		push()
+
+		// Draw three colored circles with frequency-based modulation
+		// Blue/Color3 from treble
+		s1 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value()) * sliders.sinsize.value()
+		drawColorCircle(p.x, p.y, s1, treble, palette[2], baseStrokeWeight);
+		
 		translate(-sep, 0)
-		// Original: stroke("#ff000099") - Red from bass (phase offset: +2π/3 if enabled)
+		// Red/Color1 from bass (phase offset: +2π/3 if enabled)
 		s2 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value() + phaseOffset) * sliders.sinsize.value()
-		drawColorCircle(p.x, p.y, s2, bass, 155, 0, 0, baseStrokeWeight);
+		drawColorCircle(p.x, p.y, s2, bass, palette[0], baseStrokeWeight);
 		
 		translate(0, -sep)
-		// Original: stroke("#00ff0077") - Green from mid (phase offset: +4π/3 if enabled)
+		// Green/Color2 from mid (phase offset: +4π/3 if enabled)
 		s3 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value() + phaseOffset * 2) * sliders.sinsize.value()
-		drawColorCircle(p.x, p.y, s3, mid, 0, 119, 0, baseStrokeWeight);
+		drawColorCircle(p.x, p.y, s3, mid, palette[1], baseStrokeWeight);
 		pop()
 	}
 	
@@ -351,7 +401,7 @@ function draw() {
 }
 
 // Draw a single colored circle with audio-reactive modulation
-function drawColorCircle(x, y, baseSize, freqValue, r, g, b, baseStrokeWeight) {
+function drawColorCircle(x, y, baseSize, freqValue, rgb, baseStrokeWeight) {
 	// Apply audio-reactive stroke weight
 	if (audioReactiveStrokeCheckbox.checked() && song && song.isPlaying()) {
 		strokeWeight(map(freqValue, 50, 255, 0.1, baseStrokeWeight * sliders.strokepower.value()));
@@ -366,7 +416,7 @@ function drawColorCircle(x, y, baseSize, freqValue, r, g, b, baseStrokeWeight) {
 	}
 	
 	// Set color with alpha from slider
-	stroke(r, g, b, freqValue * sliders.alpha.value());
+	stroke(rgb[0], rgb[1], rgb[2], 255 * sliders.alpha.value());
 	circle(x, y, circleSize);
 }
 
@@ -421,6 +471,46 @@ function handleFile(file) {
 		});
 	} else {
 		console.error('Please upload an audio file');
+	}
+}
+
+// Handle uploaded font file
+function handleFontFile(file) {
+	if (file.type === 'font' || file.name.endsWith('.otf') || file.name.endsWith('.ttf')) {
+		// Create a custom name from the filename (remove extension)
+		let customName = file.name.replace(/\.(otf|ttf)$/i, '');
+		
+		// Load the font
+		loadFont(file.data, (loadedFont) => {
+			console.log('Custom font loaded successfully:', customName);
+			
+			// Store the font
+			fonts[customName] = loadedFont;
+			
+			// Add to selector if not already there
+			let optionExists = false;
+			for (let i = 0; i < fontSelect.elt.options.length; i++) {
+				if (fontSelect.elt.options[i].value === customName) {
+					optionExists = true;
+					break;
+				}
+			}
+			if (!optionExists) {
+				fontSelect.option(customName);
+			}
+			
+			// Select and use the new font
+			fontSelect.selected(customName);
+			font = loadedFont;
+			storeItem('selectedFont', customName);
+			genType();
+		}, (error) => {
+			console.error('Error loading font:', error);
+			alert('Error loading font. Please make sure it is a valid .otf or .ttf file.');
+		});
+	} else {
+		console.error('Please upload a font file (.otf or .ttf)');
+		alert('Please upload a font file (.otf or .ttf)');
 	}
 }
 
