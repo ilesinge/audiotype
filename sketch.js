@@ -283,7 +283,7 @@ function setup() {
 	yPos += 20;
 	// Add filled circles checkbox
 	let savedFilledCircles = getItem('filledCircles');
-	let defaultFilledCircles = savedFilledCircles !== null ? savedFilledCircles === 'true' : true;
+	let defaultFilledCircles = savedFilledCircles !== null ? savedFilledCircles === 'true' : false;
 	filledCirclesCheckbox = createCheckbox('Filled Circles', defaultFilledCircles);
 	filledCirclesCheckbox.position(10, yPos);
 	filledCirclesCheckbox.style('color', 'white');
