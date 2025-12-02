@@ -4,4 +4,8 @@
 - audio reactive shape ???
 - bottom = bass, up = treble
 - select freq range ( 2 params to getEnergy : https://github.com/processing/p5.js-sound/blob/main/src/fft.js#L125 )
+    - fixed reduced range ?
 - credit types
+- save local type in browser
+- save mp3 in browser
+- filled circles options

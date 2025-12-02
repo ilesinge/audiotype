@@ -91,10 +91,17 @@ function setup() {
 	});
 
 	// Add font upload button
+	let fontUploadLabel = createDiv('Font:');
+	fontUploadLabel.position(310, 10);
+	fontUploadLabel.style('color', 'white');
+	fontUploadLabel.style('font-family', 'monospace');
+	fontUploadLabel.style('margin-right', '5px');
+	
 	let fontUploadButton = createFileInput(handleFontFile);
-	fontUploadButton.position(310, 10);
+	fontUploadButton.position(350, 8);
 	fontUploadButton.style('color', 'white');
 	fontUploadButton.attribute('accept', '.otf,.ttf');
+	uiElements.push(fontUploadLabel);
 	uiElements.push(fontUploadButton);
 
 	// Add color palette selector
@@ -152,8 +159,14 @@ function setup() {
 	fft = new p5.FFT(0.8, 128);
 	
 	// Add file upload button for audio
+	let uploadLabel = createDiv('MP3:');
+	uploadLabel.position(10, yPos + 30);
+	uploadLabel.style('color', 'white');
+	uploadLabel.style('font-family', 'monospace');
+	uploadLabel.style('margin-right', '5px');
+	
 	let uploadButton = createFileInput(handleFile);
-	uploadButton.position(10, yPos + 30);
+	uploadButton.position(45, yPos + 28);
 	uploadButton.style('color', 'white');
 	
 	// Add play/pause button
@@ -268,6 +281,7 @@ function setup() {
 	// Store all UI elements for toggling
 	uiElements.push(fontSelect);
 	uiElements.push(paletteSelect);
+	uiElements.push(uploadLabel);
 	uiElements.push(uploadButton);
 	uiElements.push(playButton);
 	uiElements.push(textInput);
