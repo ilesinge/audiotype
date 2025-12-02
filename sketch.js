@@ -9,7 +9,7 @@ let uiVisible = true
 let textInput, currentText
 let peakDetect
 let audioReactiveCheckbox, audioReactiveStrokeCheckbox, audioReactiveSizeCheckbox
-let colorWaveOffsetCheckbox
+let colorWaveOffsetCheckbox, filledCirclesCheckbox
 let seekSlider, isSeeking = false
 let panX = 0, panY = 0, zoomLevel = 1
 let isDragging = false, lastMouseX, lastMouseY
@@ -42,6 +42,12 @@ function preload() {
 	// Load saved font or default to compagnon
 	let savedFont = getItem('selectedFont');
 	let fontName = savedFont !== null ? savedFont : 'compagnon';
+	
+	// If the saved font is not one of the preloaded ones, fallback to compagnon
+	// The custom font will be loaded in setup() via loadSavedFont()
+	if (!fonts[fontName]) {
+		fontName = 'compagnon';
+	}
 	font = fonts[fontName];
 }
 
@@ -114,7 +120,7 @@ function setup() {
 		paletteSelect.option(name);
 	}
 	paletteSelect.selected(paletteName);
-	paletteSelect.position(180, 10);
+	paletteSelect.position(200, 10);
 	paletteSelect.style('color', 'white');
 	paletteSelect.style('background-color', '#222');
 	paletteSelect.style('border', '1px solid #555');
@@ -169,6 +175,7 @@ function setup() {
 	uploadLabel.style('margin-right', '5px');
 	
 	let uploadButton = createFileInput(handleFile);
+	uploadButton.attribute('accept', '.mp3,.wav,.ogg');
 	uploadButton.position(45, yPos - 2);
 	uploadButton.style('color', 'white');
 	
@@ -274,6 +281,18 @@ function setup() {
 	});
 	
 	yPos += 20;
+	// Add filled circles checkbox
+	let savedFilledCircles = getItem('filledCircles');
+	let defaultFilledCircles = savedFilledCircles !== null ? savedFilledCircles === 'true' : false;
+	filledCirclesCheckbox = createCheckbox('Filled Circles', defaultFilledCircles);
+	filledCirclesCheckbox.position(10, yPos);
+	filledCirclesCheckbox.style('color', 'white');
+	filledCirclesCheckbox.style('font-family', 'monospace');
+	filledCirclesCheckbox.changed(() => {
+		storeItem('filledCircles', filledCirclesCheckbox.checked().toString());
+	});
+	
+	yPos += 20;
 	// Add seek slider for audio navigation
 	seekSlider = createSlider(0, 100, 0, 0.1);
 	seekSlider.position(10, yPos);
@@ -310,6 +329,7 @@ function setup() {
 	uiElements.push(audioReactiveStrokeCheckbox);
 	uiElements.push(audioReactiveSizeCheckbox);
 	uiElements.push(colorWaveOffsetCheckbox);
+	uiElements.push(filledCirclesCheckbox);
 	uiElements.push(seekSlider);
 	uiElements.push(recordButton);
 	for (let name in sliders) {
@@ -319,8 +339,9 @@ function setup() {
 
 	genType()
 	
-	// Check for saved audio
+	// Check for saved audio and font
 	loadSavedAudio();
+	loadSavedFont();
 }
 
 function draw() {
@@ -368,20 +389,21 @@ function draw() {
 		// Use getEnergy for frequency bins (more accurate than manual binning)
 		// getEnergy returns 0-255 for the specified frequency range
 		
-		// Low frequencies (bass) - 20Hz to 140Hz
-		bass = fft.getEnergy("bass");
+		// Custom frequency ranges for electronic music
+		// Bass: 20-140Hz (Kick & Sub)
+		bass = fft.getEnergy(20, 199);
 		
-		// Mid frequencies - 140Hz to 2600Hz
-		mid = fft.getEnergy("mid");
+		// Mid: 200-3000Hz (Snare, Synths, Vocals)
+		mid = fft.getEnergy(200, 2000);
 		
-		// High frequencies (treble) - 2600Hz to 20000Hz
-		//treble = fft.getEnergy("treble");
-		treble = fft.getEnergy("highMid");
+		// Treble: 3000-14000Hz (Hi-hats, Cymbals)
+		treble = fft.getEnergy(2000, 14000);
 		
 		// Map values to desired range
 		bass = map(bass, 0, 255, 50, 255);
 		mid = map(mid, 0, 255, 50, 255);
-		treble = map(treble, 0, 255, 50, 255);
+		// Boost high frequencies as they tend to have lower energy
+		treble = map(treble, 0, 180, 50, 255);
 		
 		// Apply quantization if enabled
 		let quantizeBins = sliders.quantize.value();
@@ -454,11 +476,21 @@ function drawColorCircle(x, y, baseSize, freqValue, rgb, baseStrokeWeight) {
 	}
 	
 	// Set color with alpha from slider
-	stroke(rgb[0], rgb[1], rgb[2], 255 * sliders.alpha.value());
+	let c = color(rgb[0], rgb[1], rgb[2], 255 * sliders.alpha.value());
+	stroke(c);
+	
+	if (filledCirclesCheckbox.checked()) {
+		fill(c);
+	} else {
+		noFill();
+	}
+	
 	circle(x, y, circleSize);
 }
 
 function genType() {
+	if (!font) return;
+	
 	txtSize = width / 16 * sliders.textsize.value()
 	let lineSpacing = txtSize * 0.9;
 	
@@ -505,6 +537,11 @@ function handleFontFile(file) {
 	if (file.type === 'font' || file.name.endsWith('.otf') || file.name.endsWith('.ttf')) {
 		// Create a custom name from the filename (remove extension)
 		let customName = file.name.replace(/\.(otf|ttf)$/i, '');
+		
+		// Save to DB if file object is available
+		if (file.file) {
+			saveFontToDB(file.file, customName);
+		}
 		
 		// Load the font
 		loadFont(file.data, (loadedFont) => {
@@ -742,10 +779,11 @@ function loadAudioFromSource(source) {
 	});
 }
 
-// IndexedDB helpers for saving audio
+// IndexedDB helpers for saving audio and fonts
 const DB_NAME = 'AudioTypeDB';
-const DB_VERSION = 1;
-const STORE_NAME = 'audioFiles';
+const DB_VERSION = 2;
+const AUDIO_STORE_NAME = 'audioFiles';
+const FONT_STORE_NAME = 'fontFiles';
 
 function openDB() {
 	return new Promise((resolve, reject) => {
@@ -755,8 +793,11 @@ function openDB() {
 		
 		request.onupgradeneeded = (event) => {
 			let db = event.target.result;
-			if (!db.objectStoreNames.contains(STORE_NAME)) {
-				db.createObjectStore(STORE_NAME);
+			if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) {
+				db.createObjectStore(AUDIO_STORE_NAME);
+			}
+			if (!db.objectStoreNames.contains(FONT_STORE_NAME)) {
+				db.createObjectStore(FONT_STORE_NAME);
 			}
 		};
 		
@@ -767,8 +808,8 @@ function openDB() {
 async function saveAudioToDB(fileData) {
 	try {
 		let db = await openDB();
-		let tx = db.transaction(STORE_NAME, 'readwrite');
-		let store = tx.objectStore(STORE_NAME);
+		let tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+		let store = tx.objectStore(AUDIO_STORE_NAME);
 		store.put(fileData, 'savedAudio');
 		console.log('Audio saved to IndexedDB');
 	} catch (err) {
@@ -780,8 +821,8 @@ async function getAudioFromDB() {
 	try {
 		let db = await openDB();
 		return new Promise((resolve, reject) => {
-			let tx = db.transaction(STORE_NAME, 'readonly');
-			let store = tx.objectStore(STORE_NAME);
+			let tx = db.transaction(AUDIO_STORE_NAME, 'readonly');
+			let store = tx.objectStore(AUDIO_STORE_NAME);
 			let request = store.get('savedAudio');
 			
 			request.onsuccess = () => resolve(request.result);
@@ -793,6 +834,36 @@ async function getAudioFromDB() {
 	}
 }
 
+async function saveFontToDB(fileData, fontName) {
+	try {
+		let db = await openDB();
+		let tx = db.transaction(FONT_STORE_NAME, 'readwrite');
+		let store = tx.objectStore(FONT_STORE_NAME);
+		// Save both the file data and the name
+		store.put({ file: fileData, name: fontName }, 'savedFont');
+		console.log('Font saved to IndexedDB');
+	} catch (err) {
+		console.error('Error saving font to DB:', err);
+	}
+}
+
+async function getFontFromDB() {
+	try {
+		let db = await openDB();
+		return new Promise((resolve, reject) => {
+			let tx = db.transaction(FONT_STORE_NAME, 'readonly');
+			let store = tx.objectStore(FONT_STORE_NAME);
+			let request = store.get('savedFont');
+			
+			request.onsuccess = () => resolve(request.result);
+			request.onerror = () => reject(request.error);
+		});
+	} catch (err) {
+		console.error('Error getting font from DB:', err);
+		return null;
+	}
+}
+
 async function loadSavedAudio() {
 	let savedFile = await getAudioFromDB();
 	if (savedFile) {
@@ -800,5 +871,41 @@ async function loadSavedAudio() {
 		if (audioNameLabel && savedFile.name) audioNameLabel.html(savedFile.name);
 		let url = URL.createObjectURL(savedFile);
 		loadAudioFromSource(url);
+	}
+}
+
+async function loadSavedFont() {
+	let savedFontData = await getFontFromDB();
+	if (savedFontData) {
+		console.log('Found saved font in DB:', savedFontData.name);
+		let fontName = savedFontData.name;
+		let fontFile = savedFontData.file;
+		
+		// Create a blob URL for the font
+		let url = URL.createObjectURL(fontFile);
+		
+		// Load the font
+		loadFont(url, (loadedFont) => {
+			// Store the font
+			fonts[fontName] = loadedFont;
+			
+			// Add to selector if not already there
+			let optionExists = false;
+			for (let i = 0; i < fontSelect.elt.options.length; i++) {
+				if (fontSelect.elt.options[i].value === fontName) {
+					optionExists = true;
+					break;
+				}
+			}
+			if (!optionExists) {
+				fontSelect.option(fontName);
+			}
+			
+			// Select and use the new font
+			fontSelect.selected(fontName);
+			font = loadedFont;
+			storeItem('selectedFont', fontName);
+			genType();
+		});
 	}
 }
