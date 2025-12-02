@@ -8,7 +8,7 @@ let uiElements = []
 let uiVisible = true
 let textInput, currentText
 let peakDetect
-let audioReactiveCheckbox, audioReactiveStrokeCheckbox, audioReactiveSizeCheckbox
+let audioReactiveAlphaCheckbox, audioReactiveStrokeCheckbox, audioReactiveSizeCheckbox
 let colorWaveOffsetCheckbox, filledCirclesCheckbox
 let seekSlider, isSeeking = false
 let panX = 0, panY = 0, zoomLevel = 1
@@ -159,7 +159,7 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('sizepower', 'Size Power', 0.5, 10, 2, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('quantize', 'Quantize (0=off)', 0, 20, 0, 1, yPos);
+	createSliderWithLabel('quantize', 'Quantize (0=off)', 0, 20, 4, 1, yPos);
 	yPos += 25;
 	createSliderWithLabel('alpha', 'Alpha', 0, 1, 0.5, 0.01, yPos);
 
@@ -233,15 +233,15 @@ function setup() {
 	}
 	
 	yPos += 55;
-	// Add audio reactive checkbox
-	let savedColorReactive = getItem('audioReactiveColors');
-	let defaultColorReactive = savedColorReactive !== null ? savedColorReactive === 'true' : true;
-	audioReactiveCheckbox = createCheckbox('Audio Reactive Colors', defaultColorReactive);
-	audioReactiveCheckbox.position(10, yPos);
-	audioReactiveCheckbox.style('color', 'white');
-	audioReactiveCheckbox.style('font-family', 'monospace');
-	audioReactiveCheckbox.changed(() => {
-		storeItem('audioReactiveColors', audioReactiveCheckbox.checked().toString());
+	// Add audio reactive alpha checkbox
+	let savedAlphaReactive = getItem('audioReactiveAlpha');
+	let defaultAlphaReactive = savedAlphaReactive !== null ? savedAlphaReactive === 'true' : false;
+	audioReactiveAlphaCheckbox = createCheckbox('Audio Reactive Alpha', defaultAlphaReactive);
+	audioReactiveAlphaCheckbox.position(10, yPos);
+	audioReactiveAlphaCheckbox.style('color', 'white');
+	audioReactiveAlphaCheckbox.style('font-family', 'monospace');
+	audioReactiveAlphaCheckbox.changed(() => {
+		storeItem('audioReactiveAlpha', audioReactiveAlphaCheckbox.checked().toString());
 	});
 	
 	yPos += 20;
@@ -259,7 +259,7 @@ function setup() {
 	yPos += 20;
 	// Add audio reactive size checkbox
 	let savedSizeReactive = getItem('audioReactiveSize');
-	let defaultSizeReactive = savedSizeReactive !== null ? savedSizeReactive === 'true' : false;
+	let defaultSizeReactive = savedSizeReactive !== null ? savedSizeReactive === 'true' : true;
 	audioReactiveSizeCheckbox = createCheckbox('Audio Reactive Size', defaultSizeReactive);
 	audioReactiveSizeCheckbox.position(10, yPos);
 	audioReactiveSizeCheckbox.style('color', 'white');
@@ -325,7 +325,7 @@ function setup() {
 	uiElements.push(audioNameLabel);
 	uiElements.push(playButton);
 	uiElements.push(textInput);
-	uiElements.push(audioReactiveCheckbox);
+	uiElements.push(audioReactiveAlphaCheckbox);
 	uiElements.push(audioReactiveStrokeCheckbox);
 	uiElements.push(audioReactiveSizeCheckbox);
 	uiElements.push(colorWaveOffsetCheckbox);
@@ -363,7 +363,7 @@ function draw() {
 	
 	// Analyze audio frequencies
 	if (song && song.isLoaded() && song.isPlaying() && 
-		(audioReactiveCheckbox.checked() || audioReactiveStrokeCheckbox.checked() || audioReactiveSizeCheckbox.checked())
+		(audioReactiveAlphaCheckbox.checked() || audioReactiveStrokeCheckbox.checked() || audioReactiveSizeCheckbox.checked())
 	) {
 		// Sync analyzeSong with playback song + time offset
 		let offsetSeconds = sliders.timeoffset.value() / 1000;
@@ -476,7 +476,13 @@ function drawColorCircle(x, y, baseSize, freqValue, rgb, baseStrokeWeight) {
 	}
 	
 	// Set color with alpha from slider
-	let c = color(rgb[0], rgb[1], rgb[2], 255 * sliders.alpha.value());
+	if (audioReactiveAlphaCheckbox.checked() && song && song.isPlaying()) {
+		baseAlpha = freqValue;
+	}
+	else {
+		baseAlpha = 255;
+	}
+	let c = color(rgb[0], rgb[1], rgb[2], baseAlpha * sliders.alpha.value());
 	stroke(c);
 	
 	if (filledCirclesCheckbox.checked()) {
