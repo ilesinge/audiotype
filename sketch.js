@@ -114,7 +114,7 @@ function setup() {
 
 	// Add color palette selector
 	let savedPalette = getItem('selectedPalette');
-	let paletteName = savedPalette !== null ? savedPalette : 'RGB';
+	let paletteName = savedPalette !== null ? savedPalette : 'Vaporwave';
 	paletteSelect = createSelect();
 	for (let name in colorPalettes) {
 		paletteSelect.option(name);
@@ -131,11 +131,11 @@ function setup() {
 
 	// Create sliders with saved values
 	let yPos = 40;
-	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.07, 0.01, yPos, genType);
+	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.2, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Size', 0, 800, 100, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sinsize', 'Sin Size', 0, 50, 20, 1, yPos);
+	createSliderWithLabel('sinsize', 'Sin Size', 0, 50, 10, 1, yPos);
 	yPos += 25;
 	createSliderWithLabel('sinwidth', 'Sin Width', 0.01, 2, 0.25, 0.01, yPos);
 	yPos += 25;
@@ -145,15 +145,15 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('colorsep', 'Color Sep', 0.1, 20, 2, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('noisemult', 'Noise Mult', 0, 50, 20, 1, yPos);
+	createSliderWithLabel('noisemult', 'Noise Mult', 0, 50, 0, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('noisespeed', 'Noise Speed', 0, 0.4, 0.005, 0.001, yPos);
+	createSliderWithLabel('noisespeed', 'Noise Speed', 0, 0.4, 0, 0.001, yPos);
 	yPos += 25;
 	createSliderWithLabel('strokeweight', 'Stroke Weight', 0.1, 5, 1, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('audiosmooth', 'Audio Smooth', 0, 0.99, 0.8, 0.01, yPos);
+	createSliderWithLabel('audiosmooth', 'Audio Smooth', 0, 0.99, 0.1, 0.01, yPos);
 	yPos += 25;
-	createSliderWithLabel('timeoffset', 'Time Offset (ms)', -100, 100, -30, 1, yPos);
+	createSliderWithLabel('timeoffset', 'Time Offset (ms)', -100, 100, -40, 1, yPos);
 	yPos += 25;
 	createSliderWithLabel('strokepower', 'Stroke Power', 0.5, 10, 2, 0.1, yPos);
 	yPos += 25;
@@ -161,7 +161,7 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('quantize', 'Quantize (0=off)', 0, 20, 0, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('alpha', 'Alpha', 0, 1, 0.75, 0.01, yPos);
+	createSliderWithLabel('alpha', 'Alpha', 0, 1, 0.5, 0.01, yPos);
 
 	// Initialize FFT for frequency analysis (128 bins for lower latency)
 	fft = new p5.FFT(0.8, 128);
@@ -283,7 +283,7 @@ function setup() {
 	yPos += 20;
 	// Add filled circles checkbox
 	let savedFilledCircles = getItem('filledCircles');
-	let defaultFilledCircles = savedFilledCircles !== null ? savedFilledCircles === 'true' : false;
+	let defaultFilledCircles = savedFilledCircles !== null ? savedFilledCircles === 'true' : true;
 	filledCirclesCheckbox = createCheckbox('Filled Circles', defaultFilledCircles);
 	filledCirclesCheckbox.position(10, yPos);
 	filledCirclesCheckbox.style('color', 'white');
