@@ -131,19 +131,19 @@ function setup() {
 
 	// Create sliders with saved values
 	let yPos = 40;
-	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.2, 0.01, yPos, genType);
+	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.33, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Size', 0, 800, 100, 1, yPos);
 	yPos += 25;
 	createSliderWithLabel('sinsize', 'Sin Size', 0, 50, 10, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sinwidth', 'Sin Width', 0.01, 2, 0.25, 0.01, yPos);
+	createSliderWithLabel('sinwidth', 'Sin Width', 0.01, 2, 0.1, 0.01, yPos);
 	yPos += 25;
 	createSliderWithLabel('textsize', 'Text Size', 1, 20, 2, 0.1, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('sinspeed', 'Sin Speed', 0, 0.4, 0.05, 0.01, yPos);
 	yPos += 25;
-	createSliderWithLabel('colorsep', 'Color Sep', 0.1, 20, 2, 0.1, yPos);
+	createSliderWithLabel('colorsep', 'Color Sep', 0.1, 20, 4, 0.1, yPos);
 	yPos += 25;
 	createSliderWithLabel('noisemult', 'Noise Mult', 0, 50, 0, 1, yPos);
 	yPos += 25;
@@ -271,7 +271,7 @@ function setup() {
 	yPos += 20;
 	// Add color wave offset checkbox
 	let savedWaveOffset = getItem('colorWaveOffset');
-	let defaultWaveOffset = savedWaveOffset !== null ? savedWaveOffset === 'true' : false;
+	let defaultWaveOffset = savedWaveOffset !== null ? savedWaveOffset === 'true' : true;
 	colorWaveOffsetCheckbox = createCheckbox('Color Wave Offset', defaultWaveOffset);
 	colorWaveOffsetCheckbox.position(10, yPos);
 	colorWaveOffsetCheckbox.style('color', 'white');
