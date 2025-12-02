@@ -7,5 +7,4 @@
     - fixed reduced range ?
 - credit types
 - save local type in browser
-- save mp3 in browser
 - filled circles options

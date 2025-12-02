@@ -17,6 +17,8 @@ let isRecording = false, recordStartFrame = 0
 let recordButton
 let fontSelect
 let paletteSelect
+let audioNameLabel
+let playButton
 let colorPalettes = {
 	'RGB': [[255, 0, 0], [0, 255, 0], [0, 0, 255]], // #FF0000 #00FF00 #0000FF
 	'Monochrome': [[255, 255, 255], [150, 150, 150], [75, 75, 75]], // #FFFFFF #969696 #4B4B4B
@@ -122,7 +124,7 @@ function setup() {
 	});
 
 	// Create sliders with saved values
-	let yPos = 50;
+	let yPos = 40;
 	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.07, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Size', 0, 800, 100, 1, yPos);
@@ -158,37 +160,49 @@ function setup() {
 	// Initialize FFT for frequency analysis (128 bins for lower latency)
 	fft = new p5.FFT(0.8, 128);
 	
+	yPos += 30;
 	// Add file upload button for audio
 	let uploadLabel = createDiv('MP3:');
-	uploadLabel.position(10, yPos + 30);
+	uploadLabel.position(10, yPos);
 	uploadLabel.style('color', 'white');
 	uploadLabel.style('font-family', 'monospace');
 	uploadLabel.style('margin-right', '5px');
 	
 	let uploadButton = createFileInput(handleFile);
-	uploadButton.position(45, yPos + 28);
+	uploadButton.position(45, yPos - 2);
 	uploadButton.style('color', 'white');
 	
+	yPos += 25;
+	// Add label for audio filename
+	audioNameLabel = createDiv('');
+	audioNameLabel.position(10, yPos);
+	audioNameLabel.style('color', 'white');
+	audioNameLabel.style('font-family', 'monospace');
+	
+	yPos += 20;
 	// Add play/pause button
-	let playButton = createButton('Play/Pause');
-	playButton.position(10, yPos + 60);
+	playButton = createButton('Play');
+	playButton.position(10, yPos);
 	playButton.mousePressed(() => {
 		if (song && song.isLoaded()) {
 			if (song.isPlaying()) {
 				song.pause();
+				playButton.html('Play');
 				if (analyzeSong && analyzeSong.isLoaded()) {
 					analyzeSong.pause();
 				}
 			} else {
 				song.loop();
+				playButton.html('Pause');
 				// analyzeSong will sync in draw()
 			}
 		}
 	});
 	
+	yPos += 35;
 	// Add text input box
 	textInput = createElement('textarea', 'play\nground');
-	textInput.position(10, yPos + 90);
+	textInput.position(10, yPos);
 	textInput.size(180, 40);
 	textInput.style('color', 'white');
 	textInput.style('background-color', '#222');
@@ -211,53 +225,58 @@ function setup() {
 		currentText = textInput.value();
 	}
 	
+	yPos += 55;
 	// Add audio reactive checkbox
 	let savedColorReactive = getItem('audioReactiveColors');
 	let defaultColorReactive = savedColorReactive !== null ? savedColorReactive === 'true' : true;
 	audioReactiveCheckbox = createCheckbox('Audio Reactive Colors', defaultColorReactive);
-	audioReactiveCheckbox.position(10, yPos + 150);
+	audioReactiveCheckbox.position(10, yPos);
 	audioReactiveCheckbox.style('color', 'white');
 	audioReactiveCheckbox.style('font-family', 'monospace');
 	audioReactiveCheckbox.changed(() => {
 		storeItem('audioReactiveColors', audioReactiveCheckbox.checked().toString());
 	});
 	
+	yPos += 20;
 	// Add audio reactive stroke checkbox
 	let savedStrokeReactive = getItem('audioReactiveStroke');
 	let defaultStrokeReactive = savedStrokeReactive !== null ? savedStrokeReactive === 'true' : false;
 	audioReactiveStrokeCheckbox = createCheckbox('Audio Reactive Stroke', defaultStrokeReactive);
-	audioReactiveStrokeCheckbox.position(10, yPos + 175);
+	audioReactiveStrokeCheckbox.position(10, yPos);
 	audioReactiveStrokeCheckbox.style('color', 'white');
 	audioReactiveStrokeCheckbox.style('font-family', 'monospace');
 	audioReactiveStrokeCheckbox.changed(() => {
 		storeItem('audioReactiveStroke', audioReactiveStrokeCheckbox.checked().toString());
 	});
 	
+	yPos += 20;
 	// Add audio reactive size checkbox
 	let savedSizeReactive = getItem('audioReactiveSize');
 	let defaultSizeReactive = savedSizeReactive !== null ? savedSizeReactive === 'true' : false;
 	audioReactiveSizeCheckbox = createCheckbox('Audio Reactive Size', defaultSizeReactive);
-	audioReactiveSizeCheckbox.position(10, yPos + 200);
+	audioReactiveSizeCheckbox.position(10, yPos);
 	audioReactiveSizeCheckbox.style('color', 'white');
 	audioReactiveSizeCheckbox.style('font-family', 'monospace');
 	audioReactiveSizeCheckbox.changed(() => {
 		storeItem('audioReactiveSize', audioReactiveSizeCheckbox.checked().toString());
 	});
 	
+	yPos += 20;
 	// Add color wave offset checkbox
 	let savedWaveOffset = getItem('colorWaveOffset');
 	let defaultWaveOffset = savedWaveOffset !== null ? savedWaveOffset === 'true' : false;
 	colorWaveOffsetCheckbox = createCheckbox('Color Wave Offset', defaultWaveOffset);
-	colorWaveOffsetCheckbox.position(10, yPos + 225);
+	colorWaveOffsetCheckbox.position(10, yPos);
 	colorWaveOffsetCheckbox.style('color', 'white');
 	colorWaveOffsetCheckbox.style('font-family', 'monospace');
 	colorWaveOffsetCheckbox.changed(() => {
 		storeItem('colorWaveOffset', colorWaveOffsetCheckbox.checked().toString());
 	});
 	
+	yPos += 20;
 	// Add seek slider for audio navigation
 	seekSlider = createSlider(0, 100, 0, 0.1);
-	seekSlider.position(10, yPos + 255);
+	seekSlider.position(10, yPos);
 	seekSlider.style('width', '180px');
 	seekSlider.input(() => {
 		if (song && song.isLoaded()) {
@@ -269,9 +288,10 @@ function setup() {
 		}
 	});
 	
+	yPos += 25;
 	// Add Record GIF button
 	recordButton = createButton('Record GIF');
-	recordButton.position(10, yPos + 285);
+	recordButton.position(10, yPos);
 	recordButton.mousePressed(() => {
 		if (!isRecording) {
 			startRecording();
@@ -283,6 +303,7 @@ function setup() {
 	uiElements.push(paletteSelect);
 	uiElements.push(uploadLabel);
 	uiElements.push(uploadButton);
+	uiElements.push(audioNameLabel);
 	uiElements.push(playButton);
 	uiElements.push(textInput);
 	uiElements.push(audioReactiveCheckbox);
@@ -297,6 +318,9 @@ function setup() {
 	}
 
 	genType()
+	
+	// Check for saved audio
+	loadSavedAudio();
 }
 
 function draw() {
@@ -462,27 +486,15 @@ function genType() {
 // Handle uploaded audio file
 function handleFile(file) {
 	if (file.type === 'audio') {
-		// Stop and remove previous songs if exist
-		if (song) {
-			song.stop();
-		}
-		if (analyzeSong) {
-			analyzeSong.stop();
+		// Update label
+		if (audioNameLabel) audioNameLabel.html(file.name);
+
+		// Save to DB if file object is available
+		if (file.file) {
+			saveAudioToDB(file.file);
 		}
 		
-		// Load the audio file for playback
-		song = loadSound(file.data, () => {
-			console.log('Playback audio loaded successfully');
-			song.amp(0.3); // Set volume for hearing
-		});
-		
-		// Load the same audio file for FFT analysis
-		analyzeSong = loadSound(file.data, () => {
-			console.log('Analysis audio loaded successfully');
-			analyzeSong; // Silent - only for FFT analysis
-			analyzeSong.disconnect(); // Disconnect from output
-			fft.setInput(analyzeSong); // Connect FFT to analysis song
-		});
+		loadAudioFromSource(file.data);
 	} else {
 		console.error('Please upload an audio file');
 	}
@@ -699,4 +711,94 @@ function startRecording() {
 			recordButton.html('Record GIF (1 wave)');
 		}, 1000);
 	}, (framesNeeded / 30) * 1000 + 500); // Add 500ms buffer
+}
+
+// Helper to load audio from a source (URL or data)
+function loadAudioFromSource(source) {
+	// Stop and remove previous songs if exist
+	if (song) {
+		song.stop();
+	}
+	if (analyzeSong) {
+		analyzeSong.stop();
+	}
+	
+	// Reset play button
+	if (playButton) {
+		playButton.html('Play');
+	}
+	
+	// Load the audio file for playback
+	song = loadSound(source, () => {
+		console.log('Playback audio loaded successfully');
+		song.amp(0.3); // Set volume for hearing
+	});
+	
+	// Load the same audio file for FFT analysis
+	analyzeSong = loadSound(source, () => {
+		console.log('Analysis audio loaded successfully');
+		analyzeSong.disconnect(); // Disconnect from output
+		fft.setInput(analyzeSong); // Connect FFT to analysis song
+	});
+}
+
+// IndexedDB helpers for saving audio
+const DB_NAME = 'AudioTypeDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'audioFiles';
+
+function openDB() {
+	return new Promise((resolve, reject) => {
+		let request = indexedDB.open(DB_NAME, DB_VERSION);
+		
+		request.onerror = (event) => reject('IndexedDB error: ' + event.target.error);
+		
+		request.onupgradeneeded = (event) => {
+			let db = event.target.result;
+			if (!db.objectStoreNames.contains(STORE_NAME)) {
+				db.createObjectStore(STORE_NAME);
+			}
+		};
+		
+		request.onsuccess = (event) => resolve(event.target.result);
+	});
+}
+
+async function saveAudioToDB(fileData) {
+	try {
+		let db = await openDB();
+		let tx = db.transaction(STORE_NAME, 'readwrite');
+		let store = tx.objectStore(STORE_NAME);
+		store.put(fileData, 'savedAudio');
+		console.log('Audio saved to IndexedDB');
+	} catch (err) {
+		console.error('Error saving audio to DB:', err);
+	}
+}
+
+async function getAudioFromDB() {
+	try {
+		let db = await openDB();
+		return new Promise((resolve, reject) => {
+			let tx = db.transaction(STORE_NAME, 'readonly');
+			let store = tx.objectStore(STORE_NAME);
+			let request = store.get('savedAudio');
+			
+			request.onsuccess = () => resolve(request.result);
+			request.onerror = () => reject(request.error);
+		});
+	} catch (err) {
+		console.error('Error getting audio from DB:', err);
+		return null;
+	}
+}
+
+async function loadSavedAudio() {
+	let savedFile = await getAudioFromDB();
+	if (savedFile) {
+		console.log('Found saved audio in DB');
+		if (audioNameLabel && savedFile.name) audioNameLabel.html(savedFile.name);
+		let url = URL.createObjectURL(savedFile);
+		loadAudioFromSource(url);
+	}
 }
