@@ -8,7 +8,7 @@ let uiElements = []
 let uiVisible = true
 let textInput, currentText
 let peakDetect
-let audioReactiveAlphaCheckbox, audioReactiveStrokeCheckbox, audioReactiveSizeCheckbox
+let audioReactiveStrokeCheckbox, audioReactiveSizeCheckbox
 let colorWaveOffsetCheckbox, filledCirclesCheckbox
 let seekSlider, isSeeking = false
 let panX = 0, panY = 0, zoomLevel = 1
@@ -74,6 +74,23 @@ function setup() {
 	toggleButton.style('border', 'none');
 	toggleButton.mousePressed(() => toggleUI(toggleButton));
 
+	// Add color palette selector
+	let savedPalette = getItem('selectedPalette');
+	let paletteName = savedPalette !== null ? savedPalette : 'Vaporwave';
+	paletteSelect = createSelect();
+	for (let name in colorPalettes) {
+		paletteSelect.option(name);
+	}
+	paletteSelect.selected(paletteName);
+	paletteSelect.position(50, 10);
+	paletteSelect.style('color', 'white');
+	paletteSelect.style('background-color', '#222');
+	paletteSelect.style('border', '1px solid #555');
+	paletteSelect.style('font-family', 'monospace');
+	paletteSelect.changed(() => {
+		storeItem('selectedPalette', paletteSelect.value());
+	});
+
 	// Add font selector
 	let savedFont = getItem('selectedFont');
 	let fontName = savedFont !== null ? savedFont : 'compagnon';
@@ -87,7 +104,7 @@ function setup() {
 		}
 	}
 	fontSelect.selected(fontName);
-	fontSelect.position(70, 10);
+	fontSelect.position(170, 10);
 	fontSelect.style('color', 'white');
 	fontSelect.style('background-color', '#222');
 	fontSelect.style('border', '1px solid #555');
@@ -99,39 +116,22 @@ function setup() {
 	});
 
 	// Add font upload button
-	let fontUploadLabel = createDiv('Font:');
-	fontUploadLabel.position(310, 10);
-	fontUploadLabel.style('color', 'white');
-	fontUploadLabel.style('font-family', 'monospace');
-	fontUploadLabel.style('margin-right', '5px');
-	
 	let fontUploadButton = createFileInput(handleFontFile);
-	fontUploadButton.position(350, 8);
-	fontUploadButton.style('color', 'white');
-	fontUploadButton.attribute('accept', '.otf,.ttf');
-	uiElements.push(fontUploadLabel);
+	fontUploadButton.style('display', 'none');
 	uiElements.push(fontUploadButton);
 
-	// Add color palette selector
-	let savedPalette = getItem('selectedPalette');
-	let paletteName = savedPalette !== null ? savedPalette : 'Vaporwave';
-	paletteSelect = createSelect();
-	for (let name in colorPalettes) {
-		paletteSelect.option(name);
-	}
-	paletteSelect.selected(paletteName);
-	paletteSelect.position(200, 10);
-	paletteSelect.style('color', 'white');
-	paletteSelect.style('background-color', '#222');
-	paletteSelect.style('border', '1px solid #555');
-	paletteSelect.style('font-family', 'monospace');
-	paletteSelect.changed(() => {
-		storeItem('selectedPalette', paletteSelect.value());
-	});
+	let fontUploadTrigger = createButton('Upload Font');
+	fontUploadTrigger.position(10, 40);
+	fontUploadTrigger.style('color', 'white');
+	fontUploadTrigger.style('background-color', '#222');
+	fontUploadTrigger.style('border', '1px solid #555');
+	fontUploadTrigger.style('font-family', 'monospace');
+	fontUploadTrigger.mousePressed(() => fontUploadButton.elt.click());
+	uiElements.push(fontUploadTrigger);
 
 	// Create sliders with saved values
-	let yPos = 40;
-	createSliderWithLabel('factor', 'Factor', 0, 0.8, 0.33, 0.01, yPos, genType);
+	let yPos = 70;
+	createSliderWithLabel('factor', 'Amount', 0, 1, 0.4, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Size', 0, 800, 100, 1, yPos);
 	yPos += 25;
@@ -168,49 +168,56 @@ function setup() {
 	
 	yPos += 30;
 	// Add file upload button for audio
-	let uploadLabel = createDiv('MP3:');
-	uploadLabel.position(10, yPos);
-	uploadLabel.style('color', 'white');
-	uploadLabel.style('font-family', 'monospace');
-	uploadLabel.style('margin-right', '5px');
-	
-	let uploadButton = createFileInput(handleFile);
-	uploadButton.attribute('accept', '.mp3,.wav,.ogg');
-	uploadButton.position(45, yPos - 2);
-	uploadButton.style('color', 'white');
+	let audioUploadButton = createFileInput(handleAudioFile);
+	audioUploadButton.style('display', 'none');
+	audioUploadButton.attribute('accept', '.mp3,.wav,.ogg');
+	uiElements.push(audioUploadButton);
+
+	let audioUploadTrigger = createButton('Upload MP3');
+	audioUploadTrigger.position(10, yPos);
+	audioUploadTrigger.style('color', 'white');
+	audioUploadTrigger.style('background-color', '#222');
+	audioUploadTrigger.style('border', '1px solid #555');
+	audioUploadTrigger.style('font-family', 'monospace');
+	audioUploadTrigger.mousePressed(() => audioUploadButton.elt.click());
+	uiElements.push(audioUploadTrigger);
 	
 	yPos += 25;
-	// Add label for audio filename
-	audioNameLabel = createDiv('');
-	audioNameLabel.position(10, yPos);
-	audioNameLabel.style('color', 'white');
-	audioNameLabel.style('font-family', 'monospace');
-	
-	yPos += 20;
 	// Add play/pause button
-	playButton = createButton('Play');
+	playButton = createButton('▶');
 	playButton.position(10, yPos);
+	playButton.style('color', 'white');
+	playButton.style('background-color', '#222');
+	playButton.style('border', '1px solid #555');
+	playButton.style('font-family', 'monospace');
+	playButton.style('width', '40px');
 	playButton.mousePressed(() => {
 		if (song && song.isLoaded()) {
 			if (song.isPlaying()) {
 				song.pause();
-				playButton.html('Play');
+				playButton.html('▶');
 				if (analyzeSong && analyzeSong.isLoaded()) {
 					analyzeSong.pause();
 				}
 			} else {
 				song.loop();
-				playButton.html('Pause');
+				playButton.html('❚❚');
 				// analyzeSong will sync in draw()
 			}
 		}
 	});
+
+	// Add label for audio filename
+	audioNameLabel = createDiv('');
+	audioNameLabel.position(60, yPos + 2);
+	audioNameLabel.style('color', 'white');
+	audioNameLabel.style('font-family', 'monospace');
 	
-	yPos += 35;
+	yPos += 30;
 	// Add text input box
 	textInput = createElement('textarea', 'play\nground');
 	textInput.position(10, yPos);
-	textInput.size(180, 40);
+	textInput.size(180, 32);
 	textInput.style('color', 'white');
 	textInput.style('background-color', '#222');
 	textInput.style('border', '1px solid #555');
@@ -232,19 +239,7 @@ function setup() {
 		currentText = textInput.value();
 	}
 	
-	yPos += 55;
-	// Add audio reactive alpha checkbox
-	let savedAlphaReactive = getItem('audioReactiveAlpha');
-	let defaultAlphaReactive = savedAlphaReactive !== null ? savedAlphaReactive === 'true' : false;
-	audioReactiveAlphaCheckbox = createCheckbox('Audio Reactive Alpha', defaultAlphaReactive);
-	audioReactiveAlphaCheckbox.position(10, yPos);
-	audioReactiveAlphaCheckbox.style('color', 'white');
-	audioReactiveAlphaCheckbox.style('font-family', 'monospace');
-	audioReactiveAlphaCheckbox.changed(() => {
-		storeItem('audioReactiveAlpha', audioReactiveAlphaCheckbox.checked().toString());
-	});
-	
-	yPos += 20;
+	yPos += 50;
 	// Add audio reactive stroke checkbox
 	let savedStrokeReactive = getItem('audioReactiveStroke');
 	let defaultStrokeReactive = savedStrokeReactive !== null ? savedStrokeReactive === 'true' : false;
@@ -311,6 +306,10 @@ function setup() {
 	// Add Record GIF button
 	recordButton = createButton('Record GIF');
 	recordButton.position(10, yPos);
+	recordButton.style('color', 'white');
+	recordButton.style('background-color', '#222');
+	recordButton.style('border', '1px solid #555');
+	recordButton.style('font-family', 'monospace');
 	recordButton.mousePressed(() => {
 		if (!isRecording) {
 			startRecording();
@@ -320,12 +319,9 @@ function setup() {
 	// Store all UI elements for toggling
 	uiElements.push(fontSelect);
 	uiElements.push(paletteSelect);
-	uiElements.push(uploadLabel);
-	uiElements.push(uploadButton);
 	uiElements.push(audioNameLabel);
 	uiElements.push(playButton);
 	uiElements.push(textInput);
-	uiElements.push(audioReactiveAlphaCheckbox);
 	uiElements.push(audioReactiveStrokeCheckbox);
 	uiElements.push(audioReactiveSizeCheckbox);
 	uiElements.push(colorWaveOffsetCheckbox);
@@ -363,7 +359,7 @@ function draw() {
 	
 	// Analyze audio frequencies
 	if (song && song.isLoaded() && song.isPlaying() && 
-		(audioReactiveAlphaCheckbox.checked() || audioReactiveStrokeCheckbox.checked() || audioReactiveSizeCheckbox.checked())
+		(audioReactiveStrokeCheckbox.checked() || audioReactiveSizeCheckbox.checked())
 	) {
 		// Sync analyzeSong with playback song + time offset
 		let offsetSeconds = sliders.timeoffset.value() / 1000;
@@ -476,13 +472,7 @@ function drawColorCircle(x, y, baseSize, freqValue, rgb, baseStrokeWeight) {
 	}
 	
 	// Set color with alpha from slider
-	if (audioReactiveAlphaCheckbox.checked() && song && song.isPlaying()) {
-		baseAlpha = freqValue;
-	}
-	else {
-		baseAlpha = 255;
-	}
-	let c = color(rgb[0], rgb[1], rgb[2], baseAlpha * sliders.alpha.value());
+	let c = color(rgb[0], rgb[1], rgb[2], 255 * sliders.alpha.value());
 	stroke(c);
 	
 	if (filledCirclesCheckbox.checked()) {
@@ -513,7 +503,7 @@ function genType() {
 	for (let i = 0; i < texts.length; i++) {
 		let bounds = font.textBounds(texts[i], 0, 0, txtSize)
 		let textPoints = font.textToPoints(texts[i], -bounds.w / 2, bounds.h / 2 + yOffset, txtSize, {
-			sampleFactor: sliders.factor.value(),
+			sampleFactor: map(sliders.factor.value(), 0, 1, 0, 0.8),
 			simplifyThreshold: 0
 		})
 		points = points.concat(textPoints);
@@ -522,7 +512,7 @@ function genType() {
 }
 
 // Handle uploaded audio file
-function handleFile(file) {
+function handleAudioFile(file) {
 	if (file.type === 'audio') {
 		// Update label
 		if (audioNameLabel) audioNameLabel.html(file.name);
@@ -587,7 +577,8 @@ function handleFontFile(file) {
 function toggleUI(toggleButton) {
 	uiVisible = !uiVisible;
 	for (let element of uiElements) {
-		if (uiVisible) {
+		if (uiVisible && element.elt.type !== 'file') {
+			console.log(element);
 			element.show();
 		} else {
 			element.hide();
@@ -746,14 +737,12 @@ function startRecording() {
 	// Reset recording state after duration
 	setTimeout(() => {
 		isRecording = false;
-		recordButton.html('Done!');
-		console.log('Recording complete! GIF will download shortly.');
 		
 		// Reset button text after 1 second
 		setTimeout(() => {
-			recordButton.html('Record GIF (1 wave)');
+			recordButton.html('Record GIF');
 		}, 1000);
-	}, (framesNeeded / 30) * 1000 + 500); // Add 500ms buffer
+	}, (framesNeeded / 30) * 1000 + 1000); // Add 1000ms buffer
 }
 
 // Helper to load audio from a source (URL or data)
@@ -768,7 +757,7 @@ function loadAudioFromSource(source) {
 	
 	// Reset play button
 	if (playButton) {
-		playButton.html('Play');
+		playButton.html('▶');
 	}
 	
 	// Load the audio file for playback
