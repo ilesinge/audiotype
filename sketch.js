@@ -133,15 +133,15 @@ function setup() {
 	let yPos = 70;
 	createSliderWithLabel('factor', 'Amount', 0, 1, 0.4, 0.01, yPos, genType);
 	yPos += 25;
-	createSliderWithLabel('size', 'Size', 0, 800, 100, 1, yPos);
+	createSliderWithLabel('size', 'Circle Size', 0, 800, 100, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sinsize', 'Sin Size', 0, 50, 10, 1, yPos);
+	createSliderWithLabel('sinsize', 'Wave Size', 0, 50, 10, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sinwidth', 'Sin Width', 0.01, 2, 0.1, 0.01, yPos);
+	createSliderWithLabel('sinwidth', 'Wave Width', 0.01, 2, 0.1, 0.01, yPos);
 	yPos += 25;
 	createSliderWithLabel('textsize', 'Text Size', 1, 20, 2, 0.1, yPos, genType);
 	yPos += 25;
-	createSliderWithLabel('sinspeed', 'Sin Speed', 0, 0.4, 0.05, 0.01, yPos);
+	createSliderWithLabel('sinspeed', 'Wave Speed', 0, 0.4, 0.05, 0.01, yPos);
 	yPos += 25;
 	createSliderWithLabel('colorsep', 'Color Sep', 0.1, 20, 4, 0.1, yPos);
 	yPos += 25;
@@ -605,7 +605,8 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 	
 	// Create label
 	labels[name] = createDiv(label + ': ' + savedValue);
-	labels[name].position(200, yPos);
+	labels[name].attribute('x-label', label);
+	labels[name].position(150, yPos);
 	labels[name].style('color', 'white');
 	labels[name].style('font-family', 'monospace');
 }
@@ -613,10 +614,7 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 // Update all labels in real-time
 function updateLabels() {
 	for (let name in sliders) {
-		let labelText = name.charAt(0).toUpperCase() + name.slice(1);
-		// Format label text with spaces
-		labelText = labelText.replace(/([A-Z])/g, ' $1').trim();
-		labelText = labelText.charAt(0).toUpperCase() + labelText.slice(1);
+		let labelText = labels[name].attribute('x-label');
 		labels[name].html(labelText + ': ' + sliders[name].value());
 	}
 }
