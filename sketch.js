@@ -79,19 +79,6 @@ function setup() {
 	toggleButton.style('border', 'none');
 	toggleButton.mousePressed(() => toggleUI(toggleButton));
 	
-	// Add Record GIF button at the top for easy access
-	recordButton = createButton('Record GIF');
-	recordButton.position(windowWidth - 90, 10);
-	recordButton.style('color', 'white');
-	recordButton.style('background-color', '#222');
-	recordButton.style('border', '1px solid #555');
-	recordButton.style('font-family', 'monospace');
-	recordButton.mousePressed(() => {
-		if (!isRecording) {
-			startRecording();
-		}
-	});
-
 	// Add color palette selector
 	let savedPalette = getItem('selectedPalette');
 	let paletteName = savedPalette !== null ? savedPalette : 'Vaporwave';
@@ -133,13 +120,26 @@ function setup() {
 		genType();
 	});
 
+	// Add Record GIF button below selects for easy access
+	recordButton = createButton('Record GIF');
+	recordButton.position(10, 40);
+	recordButton.style('color', 'white');
+	recordButton.style('background-color', '#222');
+	recordButton.style('border', '1px solid #555');
+	recordButton.style('font-family', 'monospace');
+	recordButton.mousePressed(() => {
+		if (!isRecording) {
+			startRecording();
+		}
+	});
+
 	// Add font upload button
 	let fontUploadButton = createFileInput(handleFontFile);
 	fontUploadButton.style('display', 'none');
 	uiElements.push(fontUploadButton);
 
 	let fontUploadTrigger = createButton('Upload Font');
-	fontUploadTrigger.position(10, 40);
+	fontUploadTrigger.position(10, 70);
 	fontUploadTrigger.style('color', 'white');
 	fontUploadTrigger.style('background-color', '#222');
 	fontUploadTrigger.style('border', '1px solid #555');
@@ -148,7 +148,7 @@ function setup() {
 	uiElements.push(fontUploadTrigger);
 
 	// Create sliders with saved values
-	let yPos = 70;
+	let yPos = 100;
 	createSliderWithLabel('factor', 'Amount', 0, 1, 0.4, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Circle Size', 0, 800, 100, 1, yPos);
@@ -746,10 +746,6 @@ function mouseWheel(event) {
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	genType(); // Regenerate text points for new canvas size
-	// Reposition record button to stay in top right
-	if (recordButton) {
-		recordButton.position(windowWidth - 90, 10);
-	}
 }
 
 // Start recording a GIF for one complete sine wavelength
