@@ -8,6 +8,7 @@
 - "shuffle" or reorder colors in the palette
 - use loopable perlin noise based on sin length
 - rename labels
-- add help
+- add help / credits/link
 - add readme
 - publish repo
+- optimize

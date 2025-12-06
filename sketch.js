@@ -137,15 +137,15 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('sinsize', 'Wave Size', 0, 50, 10, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sinwidth', 'Wave Width', 0.01, 2, 0.1, 0.01, yPos);
-	yPos += 25;
-	createSliderWithLabel('textsize', 'Text Size', 1, 20, 2, 0.1, yPos, genType);
+	createSliderWithLabel('sinwidth', 'Wave Frequency', 0.01, 2, 0.1, 0.01, yPos);
 	yPos += 25;
 	createSliderWithLabel('sinspeed', 'Wave Speed', 0, 0.4, 0.05, 0.01, yPos);
 	yPos += 25;
-	createSliderWithLabel('colorsep', 'Color Sep', 0.1, 20, 4, 0.1, yPos);
+	createSliderWithLabel('textsize', 'Text Size', 1, 20, 2, 0.1, yPos, genType);
 	yPos += 25;
-	createSliderWithLabel('noisemult', 'Noise Mult', 0, 50, 0, 1, yPos);
+	createSliderWithLabel('colorsep', 'Color Separation', 0.1, 20, 4, 0.1, yPos);
+	yPos += 25;
+	createSliderWithLabel('noisemult', 'Noise Size', 0, 50, 0, 1, yPos);
 	yPos += 25;
 	createSliderWithLabel('noisespeed', 'Noise Speed', 0, 0.4, 0, 0.001, yPos);
 	yPos += 25;
@@ -155,11 +155,11 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('timeoffset', 'Time Offset (ms)', -100, 100, -40, 1, yPos);
 	yPos += 25;
-	createSliderWithLabel('strokepower', 'Stroke Power', 0.5, 10, 2, 0.1, yPos);
+	createSliderWithLabel('strokepower', 'Stroke Reactivity', 0.5, 10, 2, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('sizepower', 'Size Power', 0.5, 10, 2, 0.1, yPos);
+	createSliderWithLabel('sizepower', 'Size Reactivity', 0.5, 10, 2, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('quantize', 'Quantize (0=off)', 0, 20, 4, 1, yPos);
+	createSliderWithLabel('quantize', 'Quantize Audio (0=off)', 0, 20, 4, 1, yPos);
 	yPos += 25;
 	createSliderWithLabel('alpha', 'Alpha', 0, 1, 0.5, 0.01, yPos);
 
@@ -598,6 +598,7 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 	// Create slider
 	sliders[name] = createSlider(min, max, savedValue, step);
 	sliders[name].position(10, yPos);
+	sliders[name].style('width', '130px');
 	sliders[name].input(() => {
 		saveSliderValue(name + 'slider', sliders[name].value());
 		if (callback) callback();
@@ -606,7 +607,7 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 	// Create label
 	labels[name] = createDiv(label + ': ' + savedValue);
 	labels[name].attribute('x-label', label);
-	labels[name].position(150, yPos);
+	labels[name].position(150, yPos + 4);
 	labels[name].style('color', 'white');
 	labels[name].style('font-family', 'monospace');
 }
