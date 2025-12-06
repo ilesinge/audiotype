@@ -1,4 +1,12 @@
 let fonts = {}
+let builtInFonts = {
+	'Compagnon': { file: 'fonts/Compagnon-Roman.otf', credit: 'Juliette Duhé, Léa Pradine, Valentin Papon, Chloé Lozano, Sébastien Riollier' },
+	'Interlope': { file: 'fonts/Interlope-Regular.otf', credit: 'Gabriel Dubourg' },
+	'Karrik': { file: 'fonts/Karrik-Regular.otf', credit: 'Jean-Baptiste Morizot & Lucas Le Bihan' },
+	'Mess': { file: 'fonts/Mess.otf', credit: 'Tezzo Suzuki' },
+	'Basteleur': { file: 'fonts/Basteleur-Bold.otf', credit: 'Keussel' },
+	'Kaeru Kaeru': { file: 'fonts/kaerukaeru-Regular.otf', credit: 'Isabel Motz' }
+}
 let font, points
 let sliders = {}
 let labels = {}
@@ -38,8 +46,10 @@ let colorPalettes = {
 }
 
 function preload() {
-	fonts.compagnon = loadFont("fonts/Compagnon-Roman.otf")
-	fonts.vg5000 = loadFont("fonts/VG5000-Regular_web.otf")
+	// Load all built-in fonts
+	for (let name in builtInFonts) {
+		fonts[name] = loadFont(builtInFonts[name].file);
+	}
 	// Load saved font or default to compagnon
 	let savedFont = getItem('selectedFont');
 	let fontName = savedFont !== null ? savedFont : 'compagnon';
@@ -92,6 +102,11 @@ function setup() {
 	helpButton.style('cursor', 'pointer');
 	
 	// Create info box (hidden by default)
+	// Generate font credits from builtInFonts
+	let fontCredits = Object.entries(builtInFonts)
+		.map(([name, data]) => `${name.charAt(0).toUpperCase() + name.slice(1)} by ${data.credit}`)
+		.join(' • ');
+	
 	infoBox = createDiv(`
 		<h3 style="margin-top:0;">Audiotype</h3>
 		<p>Audio-reactive tricolor typography</p>
@@ -107,6 +122,9 @@ function setup() {
 			<li>Upload MP3 for audio reactivity</li>
 			<li>Upload custom OTF/TTF fonts</li>
 		</ul>
+		<hr style="border-color:#555;">
+		<p style="font-size:11px;">Fonts distributed by <a href="https://velvetyne.fr/" target="_blank" style="color:#888;">Velvetyne</a>:<br/>
+		${fontCredits}</p>
 		<hr style="border-color:#555;">
 		<p style="margin-bottom:0; font-size:11px;">by ilesinge · <a href="https://github.com/ilesinge/audiotype" target="_blank" style="color:#888;">source</a></p>
 	`);
@@ -150,11 +168,13 @@ function setup() {
 	let savedFont = getItem('selectedFont');
 	let fontName = savedFont !== null ? savedFont : 'compagnon';
 	fontSelect = createSelect();
-	fontSelect.option('compagnon');
-	fontSelect.option('vg5000');
+	// Add built-in fonts
+	for (let name in builtInFonts) {
+		fontSelect.option(name);
+	}
 	// Add any custom fonts that were uploaded previously
 	for (let name in fonts) {
-		if (name !== 'compagnon' && name !== 'vg5000') {
+		if (!(name in builtInFonts)) {
 			fontSelect.option(name);
 		}
 	}
@@ -769,7 +789,7 @@ function mouseWheel(event) {
 	let newZoom = zoomLevel * zoomFactor;
 	
 	// Clamp zoom level
-	newZoom = constrain(newZoom, 0.1, 5);
+	newZoom = constrain(newZoom, 0.1, 10);
 	
 	// Convert screen mouse coords to WebGL coords (origin at center)
 	let mouseXGL = mouseX - width / 2;
