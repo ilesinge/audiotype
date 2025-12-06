@@ -7,7 +7,7 @@ let builtInFonts = {
 	'Basteleur': { file: 'fonts/Basteleur-Bold.otf', credit: 'Keussel' },
 	'Kaeru Kaeru': { file: 'fonts/kaerukaeru-Regular.otf', credit: 'Isabel Motz' }
 }
-let font, points
+let font, points = []
 let sliders = {}
 let labels = {}
 let song, analyzeSong, fft
@@ -52,12 +52,12 @@ function preload() {
 	}
 	// Load saved font or default to compagnon
 	let savedFont = getItem('selectedFont');
-	let fontName = savedFont !== null ? savedFont : 'compagnon';
+	let fontName = savedFont !== null ? savedFont : 'Compagnon';
 	
 	// If the saved font is not one of the preloaded ones, fallback to compagnon
 	// The custom font will be loaded in setup() via loadSavedFont()
 	if (!fonts[fontName]) {
-		fontName = 'compagnon';
+		fontName = 'Compagnon';
 	}
 	font = fonts[fontName];
 }
