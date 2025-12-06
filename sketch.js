@@ -52,7 +52,12 @@ function preload() {
 }
 
 function setup() {
-	createCanvas(windowWidth, windowHeight)
+	// Create WebGL canvas for GPU-accelerated rendering
+	createCanvas(windowWidth, windowHeight, WEBGL)
+	
+	// WebGL rendering optimizations
+	smooth();
+	
 	frameRate(30); // Set to 30fps for consistent GIF recording
 	noFill()
 	stroke(255)
@@ -414,7 +419,8 @@ function draw() {
 		treble = 255;
 	}
 	
-	translate(width / 2, height / 2 - 200)
+	// WebGL is already centered, just apply the vertical offset
+	translate(0, -200)
 	
 	// Cache slider values outside the loop
 	let baseStrokeWeight = sliders.strokeweight.value();
@@ -479,6 +485,15 @@ function draw() {
 	
 	// End pan/zoom transformation
 	pop();
+		
+	// Debug: show FPS (positioned for WebGL - origin at center)
+	fill(255);
+	noStroke();
+	textSize(12);
+	textAlign(LEFT);
+	if (font) textFont(font); // Required for WebGL text rendering
+	text('FPS: ' + floor(frameRate()), width/2 - 70, -height/2 + 30);
+
 }
 
 // Draw a single colored circle with pre-computed values
@@ -714,12 +729,16 @@ function mouseWheel(event) {
 	// Clamp zoom level
 	newZoom = constrain(newZoom, 0.1, 5);
 	
-	// Zoom towards mouse position
-	let mouseXWorld = (mouseX - panX) / zoomLevel;
-	let mouseYWorld = (mouseY - panY) / zoomLevel;
+	// Convert screen mouse coords to WebGL coords (origin at center)
+	let mouseXGL = mouseX - width / 2;
+	let mouseYGL = mouseY - height / 2;
 	
-	panX = mouseX - mouseXWorld * newZoom;
-	panY = mouseY - mouseYWorld * newZoom;
+	// Zoom towards mouse position
+	let mouseXWorld = (mouseXGL - panX) / zoomLevel;
+	let mouseYWorld = (mouseYGL - panY) / zoomLevel;
+	
+	panX = mouseXGL - mouseXWorld * newZoom;
+	panY = mouseYGL - mouseYWorld * newZoom;
 	
 	zoomLevel = newZoom;
 	
@@ -729,6 +748,12 @@ function mouseWheel(event) {
 	storeItem('panY', panY);
 	
 	return false; // Prevent default scrolling
+}
+
+// Handle window resize
+function windowResized() {
+	resizeCanvas(windowWidth, windowHeight);
+	genType(); // Regenerate text points for new canvas size
 }
 
 // Start recording a GIF for one complete sine wavelength
