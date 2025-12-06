@@ -1,6 +1,4 @@
 - Adjust sound reactivity power
-- credit types
-- add readme
 - publish repo
 
 BONUS
