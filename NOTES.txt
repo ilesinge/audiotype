@@ -5,7 +5,9 @@
 - bottom = bass, up = treble
 - custom freq range ( 2 params to getEnergy : https://github.com/processing/p5.js-sound/blob/main/src/fft.js#L125 )
 - credit types
-- query local fonts
-- "Shuffle" or reorder colors in the palette
+- "shuffle" or reorder colors in the palette
 - use loopable perlin noise based on sin length
-- Rename lables
+- rename labels
+- add help
+- add readme
+- publish repo
