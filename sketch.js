@@ -19,6 +19,7 @@ let fontSelect
 let paletteSelect
 let audioNameLabel
 let playButton
+let helpButton, infoBox
 let colorPalettes = {
 	'RGB': [[255, 0, 0], [0, 255, 0], [0, 0, 255]], // #FF0000 #00FF00 #0000FF
 	'Monochrome': [[255, 255, 255], [150, 150, 150], [75, 75, 75]], // #FFFFFF #969696 #4B4B4B
@@ -78,6 +79,55 @@ function setup() {
 	toggleButton.style('background-color', 'black');
 	toggleButton.style('border', 'none');
 	toggleButton.mousePressed(() => toggleUI(toggleButton));
+	
+	// Add help button in top right
+	helpButton = createButton('?');
+	helpButton.position(windowWidth - 30, 10);
+	helpButton.style('color', 'white');
+	helpButton.style('background-color', '#222');
+	helpButton.style('border', '1px solid #555');
+	helpButton.style('font-family', 'monospace');
+	helpButton.style('width', '24px');
+	helpButton.style('height', '24px');
+	helpButton.style('cursor', 'pointer');
+	
+	// Create info box (hidden by default)
+	infoBox = createDiv(`
+		<h3 style="margin-top:0;">Audiotype</h3>
+		<p>Audio-reactive tricolor typography</p>
+		<hr style="border-color:#555;">
+		<p><b>Controls:</b></p>
+		<ul style="padding-left:20px; margin:5px 0;">
+			<li>Drag to pan</li>
+			<li>Scroll to zoom</li>
+			<li>Mess with the values</li>
+		</ul>
+		<p><b>Tips:</b></p>
+		<ul style="padding-left:20px; margin:5px 0;">
+			<li>Upload MP3 for audio reactivity</li>
+			<li>Upload custom OTF/TTF fonts</li>
+		</ul>
+		<hr style="border-color:#555;">
+		<p style="margin-bottom:0; font-size:11px;">by ilesinge · <a href="https://github.com/ilesinge/audiotype" target="_blank" style="color:#888;">source</a></p>
+	`);
+	infoBox.position(windowWidth - 270, 45);
+	infoBox.style('color', 'white');
+	infoBox.style('background-color', 'rgba(0,0,0,0.9)');
+	infoBox.style('border', '1px solid #555');
+	infoBox.style('padding', '15px');
+	infoBox.style('font-family', 'monospace');
+	infoBox.style('font-size', '12px');
+	infoBox.style('width', '230px');
+	infoBox.style('display', 'none');
+	infoBox.style('z-index', '1000');
+	
+	helpButton.mousePressed(() => {
+		if (infoBox.style('display') === 'none') {
+			infoBox.style('display', 'block');
+		} else {
+			infoBox.style('display', 'none');
+		}
+	});
 	
 	// Add color palette selector
 	let savedPalette = getItem('selectedPalette');
@@ -746,6 +796,9 @@ function mouseWheel(event) {
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	genType(); // Regenerate text points for new canvas size
+	// Reposition help button and info box
+	if (helpButton) helpButton.position(windowWidth - 30, 10);
+	if (infoBox) infoBox.position(windowWidth - 270, 45);
 }
 
 // Start recording a GIF for one complete sine wavelength
