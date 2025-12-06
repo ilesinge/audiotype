@@ -145,10 +145,6 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('colorsep', 'Color Separation', 0.1, 20, 4, 0.1, yPos);
 	yPos += 25;
-	createSliderWithLabel('noisemult', 'Noise Size', 0, 50, 0, 1, yPos);
-	yPos += 25;
-	createSliderWithLabel('noisespeed', 'Noise Speed', 0, 0.4, 0, 0.001, yPos);
-	yPos += 25;
 	createSliderWithLabel('strokeweight', 'Stroke Weight', 0.1, 5, 1, 0.1, yPos);
 	yPos += 25;
 	createSliderWithLabel('audiosmooth', 'Audio Smooth', 0, 0.99, 0.1, 0.01, yPos);
@@ -348,8 +344,11 @@ function draw() {
 	translate(panX, panY);
 	scale(zoomLevel);
 	
-	// Update all labels in real-time
-	updateLabels();
+	// Cache checkbox states (optimization #2)
+	let isAudioReactiveStroke = audioReactiveStrokeCheckbox.checked();
+	let isAudioReactiveSize = audioReactiveSizeCheckbox.checked();
+	let isColorWaveOffset = colorWaveOffsetCheckbox.checked();
+	let isFilledCircles = filledCirclesCheckbox.checked();
 	
 	// Update seek slider position if not actively seeking
 	if (song && song.isLoaded() && !isSeeking) {
@@ -359,7 +358,7 @@ function draw() {
 	
 	// Analyze audio frequencies
 	if (song && song.isLoaded() && song.isPlaying() && 
-		(audioReactiveStrokeCheckbox.checked() || audioReactiveSizeCheckbox.checked())
+		(isAudioReactiveStroke || isAudioReactiveSize)
 	) {
 		// Sync analyzeSong with playback song + time offset
 		let offsetSeconds = sliders.timeoffset.value() / 1000;
@@ -417,38 +416,64 @@ function draw() {
 	
 	translate(width / 2, height / 2 - 200)
 	
-	// Base stroke weight from slider
+	// Cache slider values outside the loop
 	let baseStrokeWeight = sliders.strokeweight.value();
+	let baseSize = sliders.size.value() / 10;
+	let sep = sliders.colorsep.value();
+	let sinWidth = sliders.sinwidth.value();
+	let sinSpeed = sliders.sinspeed.value();
+	let sinSize = sliders.sinsize.value();
+	let strokePower = sliders.strokepower.value();
+	let sizePower = sliders.sizepower.value();
+	let alphaValue = sliders.alpha.value();
 	
 	// Get current color palette
 	let palette = colorPalettes[paletteSelect.value()];
 	
+	// Pre-compute colors with alpha
+	let alpha255 = 255 * alphaValue;
+	let color0 = color(palette[0][0], palette[0][1], palette[0][2], alpha255);
+	let color1 = color(palette[1][0], palette[1][1], palette[1][2], alpha255);
+	let color2 = color(palette[2][0], palette[2][1], palette[2][2], alpha255);
+	
+	// Phase offset: one third of a wavelength (2π/3) for each color (if enabled)
+	let phaseOffset = isColorWaveOffset ? TWO_PI / 3 : 0;
+	
+	// Pre-compute frame-based sin component
+	let framePhase = frameCount * sinSpeed;
+	
+	// Shared draw params object
+	let params = {
+		baseStrokeWeight,
+		isAudioReactiveStroke,
+		isAudioReactiveSize,
+		isFilledCircles,
+		isAudioPlaying: song && song.isPlaying(),
+		strokePower,
+		sizePower
+	};
+	
 	// Draw all points
-	for(let i = 0; i < points.length; i++) {
+	let numPoints = points.length;
+	for(let i = 0; i < numPoints; i++) {
 		let p = points[i]
-		let s = sliders.size.value() / 10
-			+ noise(i * 0.25 + frameCount * sliders.noisespeed.value()) * sliders.noisemult.value();
-		let sep = sliders.colorsep.value();
-		
-		// Phase offset: one third of a wavelength (2π/3) for each color (if enabled)
-		let phaseOffset = colorWaveOffsetCheckbox.checked() ? TWO_PI / 3 : 0;
 		
 		push()
 
 		// Draw three colored circles with frequency-based modulation
 		// Blue/Color3 from treble
-		s1 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value()) * sliders.sinsize.value()
-		drawColorCircle(p.x, p.y, s1, treble, palette[2], baseStrokeWeight);
+		s1 = baseSize + sin(i * sinWidth + framePhase) * sinSize
+		drawCircle(p.x, p.y, s1, treble, color2, params);
 		
 		translate(-sep, 0)
 		// Red/Color1 from bass (phase offset: +2π/3 if enabled)
-		s2 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value() + phaseOffset) * sliders.sinsize.value()
-		drawColorCircle(p.x, p.y, s2, bass, palette[0], baseStrokeWeight);
+		s2 = baseSize + sin(i * sinWidth + framePhase + phaseOffset) * sinSize
+		drawCircle(p.x, p.y, s2, bass, color0, params);
 		
 		translate(0, -sep)
 		// Green/Color2 from mid (phase offset: +4π/3 if enabled)
-		s3 = s + sin(i * sliders.sinwidth.value() + frameCount * sliders.sinspeed.value() + phaseOffset * 2) * sliders.sinsize.value()
-		drawColorCircle(p.x, p.y, s3, mid, palette[1], baseStrokeWeight);
+		s3 = baseSize + sin(i * sinWidth + framePhase + phaseOffset * 2) * sinSize
+		drawCircle(p.x, p.y, s3, mid, color1, params);
 		pop()
 	}
 	
@@ -456,26 +481,24 @@ function draw() {
 	pop();
 }
 
-// Draw a single colored circle with audio-reactive modulation
-function drawColorCircle(x, y, baseSize, freqValue, rgb, baseStrokeWeight) {
+// Draw a single colored circle with pre-computed values
+function drawCircle(x, y, baseSize, freqValue, c, p) {
 	// Apply audio-reactive stroke weight
-	if (audioReactiveStrokeCheckbox.checked() && song && song.isPlaying()) {
-		strokeWeight(map(freqValue, 50, 255, 0.1, baseStrokeWeight * sliders.strokepower.value()));
+	if (p.isAudioReactiveStroke && p.isAudioPlaying) {
+		strokeWeight(map(freqValue, 50, 255, 0.1, p.baseStrokeWeight * p.strokePower));
 	} else {
-		strokeWeight(baseStrokeWeight);
+		strokeWeight(p.baseStrokeWeight);
 	}
 	
 	// Apply audio-reactive size
 	let circleSize = baseSize;
-	if (audioReactiveSizeCheckbox.checked() && song && song.isPlaying()) {
-		circleSize = baseSize * map(freqValue, 50, 255, 0.5, sliders.sizepower.value());
+	if (p.isAudioReactiveSize && p.isAudioPlaying) {
+		circleSize = baseSize * map(freqValue, 50, 255, 0.5, p.sizePower);
 	}
 	
-	// Set color with alpha from slider
-	let c = color(rgb[0], rgb[1], rgb[2], 255 * sliders.alpha.value());
 	stroke(c);
 	
-	if (filledCirclesCheckbox.checked()) {
+	if (p.isFilledCircles) {
 		fill(c);
 	} else {
 		noFill();
@@ -601,6 +624,7 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 	sliders[name].style('width', '130px');
 	sliders[name].input(() => {
 		saveSliderValue(name + 'slider', sliders[name].value());
+		updateLabels(); // Update labels on input
 		if (callback) callback();
 	});
 	

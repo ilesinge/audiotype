@@ -6,8 +6,6 @@
 - custom freq range ( 2 params to getEnergy : https://github.com/processing/p5.js-sound/blob/main/src/fft.js#L125 )
 - credit types
 - "shuffle" or reorder colors in the palette
-- use loopable perlin noise based on sin length
-- rename labels
 - add help / credits/link
 - add readme
 - publish repo
