@@ -7,3 +7,179 @@ html, body {
 canvas {
   display: block;
 }
+
+/* Base UI styling */
+.ui-control {
+  color: white;
+  background-color: #222;
+  border: 1px solid #555;
+  font-family: monospace;
+}
+
+.ui-label {
+  color: white;
+  font-family: monospace;
+}
+
+.ui-checkbox {
+  color: white;
+  font-family: monospace;
+}
+
+/* Toggle button */
+.ui-toggle {
+  color: white;
+  background-color: black;
+  border: none;
+}
+
+/* Help button */
+.ui-help {
+  color: white;
+  background-color: #222;
+  border: 1px solid #555;
+  font-family: monospace;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+}
+
+/* Info box */
+.ui-infobox {
+  color: white;
+  background-color: rgba(0,0,0,0.9);
+  border: 1px solid #555;
+  padding: 15px;
+  font-family: monospace;
+  font-size: 12px;
+  width: 230px;
+  display: none;
+  z-index: 1000;
+}
+
+/* Text input */
+.ui-textarea {
+  color: white;
+  background-color: #222;
+  border: 1px solid #555;
+  font-family: monospace;
+  padding: 5px;
+  resize: vertical;
+  text-align: right;
+}
+
+/* Play button */
+.ui-play {
+  color: white;
+  background-color: #222;
+  border: 1px solid #555;
+  font-family: monospace;
+  width: 40px;
+}
+
+/* Seekbar */
+/*
+.seekbar {
+  width: 180px;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  background: linear-gradient(to right, #fff 0%, #555 0%);
+}
+
+.seekbar::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  margin-top: 0;
+}
+
+.seekbar::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+.seekbar::-moz-range-track {
+  height: 8px;
+  border-radius: 4px;
+  background: transparent;
+}*/
+
+/* Transparent mode overrides - applied to parent container */
+.ui-container.transparent-mode .ui-toggle {
+  color: black;
+  background-color: rgba(255,255,255,0.8);
+}
+
+.ui-container.transparent-mode .ui-control,
+.ui-container.transparent-mode .ui-help,
+.ui-container.transparent-mode .ui-textarea,
+.ui-container.transparent-mode .ui-play {
+  color: black;
+  background-color: rgba(255,255,255,0.8);
+  border-color: #aaa;
+}
+
+.ui-container.transparent-mode .ui-infobox {
+  color: black;
+  background-color: rgba(255,255,255,0.9);
+  border-color: #aaa;
+}
+
+.ui-container.transparent-mode .ui-label,
+.ui-container.transparent-mode .ui-checkbox {
+  color: black;
+}
+
+/* Parameter sliders */
+.ui-slider {
+  width: 130px;
+  accent-color: white;
+  background-color: transparent;
+}
+.ui-slider::-moz-range-progress {
+  background-color: white;
+  height: 0.5em;
+  border-radius: 0.5em;
+}
+.ui-container.transparent-mode .ui-slider::-moz-range-progress {
+  background-color: #555;
+}
+
+.ui-container.transparent-mode .ui-slider {
+  accent-color: #555;
+}
+
+.ui-container.transparent-mode .ui-slider::-moz-range-thumb {
+  background: #000;
+}
+
+.ui-slider::-moz-range-track {
+  color: #555;
+  height: 0.3em;
+  border-radius: 0.5em;
+  background-color: #555;
+  border: 1px solid #AAA;
+}
+.ui-container.transparent-mode .ui-slider::-moz-range-track {
+  background-color: #999;
+}
+
+
+/* Hidden file inputs */
+.ui-hidden {
+  display: none;
+}

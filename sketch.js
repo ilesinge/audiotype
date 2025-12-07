@@ -14,10 +14,11 @@ let song, analyzeSong, fft
 let bass, mid, treble
 let uiElements = []
 let uiVisible = true
+let uiContainer
 let textInput, currentText
 let peakDetect
 let audioReactiveStrokeCheckbox, audioReactiveSizeCheckbox
-let colorWaveOffsetCheckbox, filledCirclesCheckbox
+let colorWaveOffsetCheckbox, filledCirclesCheckbox, transparentBgCheckbox
 let seekSlider, isSeeking = false
 let panX = 0, panY = 0, zoomLevel = 1
 let isDragging = false, lastMouseX, lastMouseY
@@ -26,8 +27,8 @@ let recordButton
 let fontSelect
 let paletteSelect
 let audioNameLabel
-let playButton
-let helpButton, infoBox
+let playButton, fontUploadTrigger, audioUploadTrigger
+let helpButton, infoBox, toggleButton
 let colorPalettes = {
 	'RGB': [[255, 0, 0], [0, 255, 0], [0, 0, 255]], // #FF0000 #00FF00 #0000FF
 	'Monochrome': [[255, 255, 255], [150, 150, 150], [75, 75, 75]], // #FFFFFF #969696 #4B4B4B
@@ -81,24 +82,20 @@ function setup() {
 	if (savedPanY !== null) panY = parseFloat(savedPanY);
 	if (savedZoom !== null) zoomLevel = parseFloat(savedZoom);
 	
+	// Use body as container for UI styling (all p5 elements are children of body)
+	uiContainer = select('body');
+	uiContainer.addClass('ui-container');
+	
 	// Add toggle button for UI visibility
-	let toggleButton = createButton('▼');
+	toggleButton = createButton('▼');
 	toggleButton.position(10, 10);
-	toggleButton.style('color', 'white');
-	toggleButton.style('background-color', 'black');
-	toggleButton.style('border', 'none');
+	toggleButton.addClass('ui-toggle');
 	toggleButton.mousePressed(() => toggleUI(toggleButton));
 	
 	// Add help button in top right
 	helpButton = createButton('?');
 	helpButton.position(windowWidth - 30, 10);
-	helpButton.style('color', 'white');
-	helpButton.style('background-color', '#222');
-	helpButton.style('border', '1px solid #555');
-	helpButton.style('font-family', 'monospace');
-	helpButton.style('width', '24px');
-	helpButton.style('height', '24px');
-	helpButton.style('cursor', 'pointer');
+	helpButton.addClass('ui-help');
 	
 	// Create info box (hidden by default)
 	// Generate font credits from builtInFonts
@@ -128,15 +125,7 @@ function setup() {
 		<p style="margin-bottom:0; font-size:11px;">by ilesinge · <a href="https://github.com/ilesinge/audiotype" target="_blank" style="color:#888;">source</a></p>
 	`);
 	infoBox.position(windowWidth - 270, 45);
-	infoBox.style('color', 'white');
-	infoBox.style('background-color', 'rgba(0,0,0,0.9)');
-	infoBox.style('border', '1px solid #555');
-	infoBox.style('padding', '15px');
-	infoBox.style('font-family', 'monospace');
-	infoBox.style('font-size', '12px');
-	infoBox.style('width', '230px');
-	infoBox.style('display', 'none');
-	infoBox.style('z-index', '1000');
+	infoBox.addClass('ui-infobox');
 	
 	helpButton.mousePressed(() => {
 		if (infoBox.style('display') === 'none') {
@@ -155,10 +144,7 @@ function setup() {
 	}
 	paletteSelect.selected(paletteName);
 	paletteSelect.position(50, 10);
-	paletteSelect.style('color', 'white');
-	paletteSelect.style('background-color', '#222');
-	paletteSelect.style('border', '1px solid #555');
-	paletteSelect.style('font-family', 'monospace');
+	paletteSelect.addClass('ui-control');
 	paletteSelect.changed(() => {
 		storeItem('selectedPalette', paletteSelect.value());
 	});
@@ -179,10 +165,7 @@ function setup() {
 	}
 	fontSelect.selected(fontName);
 	fontSelect.position(170, 10);
-	fontSelect.style('color', 'white');
-	fontSelect.style('background-color', '#222');
-	fontSelect.style('border', '1px solid #555');
-	fontSelect.style('font-family', 'monospace');
+	fontSelect.addClass('ui-control');
 	fontSelect.changed(() => {
 		font = fonts[fontSelect.value()];
 		storeItem('selectedFont', fontSelect.value());
@@ -192,10 +175,7 @@ function setup() {
 	// Add Record GIF button below selects for easy access
 	recordButton = createButton('Record GIF');
 	recordButton.position(10, 40);
-	recordButton.style('color', 'white');
-	recordButton.style('background-color', '#222');
-	recordButton.style('border', '1px solid #555');
-	recordButton.style('font-family', 'monospace');
+	recordButton.addClass('ui-control');
 	recordButton.mousePressed(() => {
 		if (!isRecording) {
 			startRecording();
@@ -204,20 +184,36 @@ function setup() {
 
 	// Add font upload button
 	let fontUploadButton = createFileInput(handleFontFile);
-	fontUploadButton.style('display', 'none');
+	fontUploadButton.addClass('ui-hidden');
 	uiElements.push(fontUploadButton);
 
-	let fontUploadTrigger = createButton('Upload Font');
+	fontUploadTrigger = createButton('Upload Font');
 	fontUploadTrigger.position(10, 70);
-	fontUploadTrigger.style('color', 'white');
-	fontUploadTrigger.style('background-color', '#222');
-	fontUploadTrigger.style('border', '1px solid #555');
-	fontUploadTrigger.style('font-family', 'monospace');
+	fontUploadTrigger.addClass('ui-control');
 	fontUploadTrigger.mousePressed(() => fontUploadButton.elt.click());
 	uiElements.push(fontUploadTrigger);
 
+	// Add text input box (below Upload Font button)
+	textInput = createElement('textarea', 'play\nground');
+	textInput.position(10, 100);
+	textInput.size(180, 32);
+	textInput.addClass('ui-textarea');
+	textInput.input(() => {
+		currentText = textInput.value();
+		storeItem('textContent', currentText);
+		genType();
+	});
+	// Load saved text or use default
+	let savedText = getItem('textContent');
+	if (savedText !== null) {
+		textInput.value(savedText);
+		currentText = savedText;
+	} else {
+		currentText = textInput.value();
+	}
+
 	// Create sliders with saved values
-	let yPos = 100;
+	let yPos = 150;
 	createSliderWithLabel('factor', 'Amount', 0, 1, 0.4, 0.01, yPos, genType);
 	yPos += 25;
 	createSliderWithLabel('size', 'Circle Size', 0, 800, 100, 1, yPos);
@@ -254,16 +250,13 @@ function setup() {
 	yPos += 30;
 	// Add file upload button for audio
 	let audioUploadButton = createFileInput(handleAudioFile);
-	audioUploadButton.style('display', 'none');
+	audioUploadButton.addClass('ui-hidden');
 	audioUploadButton.attribute('accept', '.mp3,.wav,.ogg');
 	uiElements.push(audioUploadButton);
 
-	let audioUploadTrigger = createButton('Upload MP3');
+	audioUploadTrigger = createButton('Upload MP3');
 	audioUploadTrigger.position(10, yPos);
-	audioUploadTrigger.style('color', 'white');
-	audioUploadTrigger.style('background-color', '#222');
-	audioUploadTrigger.style('border', '1px solid #555');
-	audioUploadTrigger.style('font-family', 'monospace');
+	audioUploadTrigger.addClass('ui-control');
 	audioUploadTrigger.mousePressed(() => audioUploadButton.elt.click());
 	uiElements.push(audioUploadTrigger);
 	
@@ -271,11 +264,7 @@ function setup() {
 	// Add play/pause button
 	playButton = createButton('▶');
 	playButton.position(10, yPos);
-	playButton.style('color', 'white');
-	playButton.style('background-color', '#222');
-	playButton.style('border', '1px solid #555');
-	playButton.style('font-family', 'monospace');
-	playButton.style('width', '40px');
+	playButton.addClass('ui-play');
 	playButton.mousePressed(() => {
 		if (song && song.isLoaded()) {
 			if (song.isPlaying()) {
@@ -295,43 +284,30 @@ function setup() {
 	// Add label for audio filename
 	audioNameLabel = createDiv('');
 	audioNameLabel.position(60, yPos + 2);
-	audioNameLabel.style('color', 'white');
-	audioNameLabel.style('font-family', 'monospace');
+	audioNameLabel.addClass('ui-label');
 	
-	yPos += 30;
-	// Add text input box
-	textInput = createElement('textarea', 'play\nground');
-	textInput.position(10, yPos);
-	textInput.size(180, 32);
-	textInput.style('color', 'white');
-	textInput.style('background-color', '#222');
-	textInput.style('border', '1px solid #555');
-	textInput.style('font-family', 'monospace');
-	textInput.style('padding', '5px');
-	textInput.style('resize', 'vertical');
-	textInput.style('text-align', 'right');
-	textInput.input(() => {
-		currentText = textInput.value();
-		storeItem('textContent', currentText);
-		genType();
+	yPos += 25;
+	// Add seek slider for audio navigation (below play button)
+	seekSlider = createSlider(0, 100, 0, 0.1);
+	seekSlider.position(10, yPos);
+	seekSlider.addClass('ui-slider');
+	seekSlider.input(() => {
+		if (song && song.isLoaded()) {
+			let seekTime = (seekSlider.value() / 100) * song.duration();
+			song.jump(seekTime);
+			if (analyzeSong && analyzeSong.isLoaded()) {
+				analyzeSong.jump(seekTime);
+			}
+		}
 	});
-	// Load saved text or use default
-	let savedText = getItem('textContent');
-	if (savedText !== null) {
-		textInput.value(savedText);
-		currentText = savedText;
-	} else {
-		currentText = textInput.value();
-	}
 	
-	yPos += 50;
+	yPos += 25;
 	// Add audio reactive stroke checkbox
 	let savedStrokeReactive = getItem('audioReactiveStroke');
 	let defaultStrokeReactive = savedStrokeReactive !== null ? savedStrokeReactive === 'true' : false;
 	audioReactiveStrokeCheckbox = createCheckbox('Audio Reactive Stroke', defaultStrokeReactive);
 	audioReactiveStrokeCheckbox.position(10, yPos);
-	audioReactiveStrokeCheckbox.style('color', 'white');
-	audioReactiveStrokeCheckbox.style('font-family', 'monospace');
+	audioReactiveStrokeCheckbox.addClass('ui-checkbox');
 	audioReactiveStrokeCheckbox.changed(() => {
 		storeItem('audioReactiveStroke', audioReactiveStrokeCheckbox.checked().toString());
 	});
@@ -342,8 +318,7 @@ function setup() {
 	let defaultSizeReactive = savedSizeReactive !== null ? savedSizeReactive === 'true' : true;
 	audioReactiveSizeCheckbox = createCheckbox('Audio Reactive Size', defaultSizeReactive);
 	audioReactiveSizeCheckbox.position(10, yPos);
-	audioReactiveSizeCheckbox.style('color', 'white');
-	audioReactiveSizeCheckbox.style('font-family', 'monospace');
+	audioReactiveSizeCheckbox.addClass('ui-checkbox');
 	audioReactiveSizeCheckbox.changed(() => {
 		storeItem('audioReactiveSize', audioReactiveSizeCheckbox.checked().toString());
 	});
@@ -354,8 +329,7 @@ function setup() {
 	let defaultWaveOffset = savedWaveOffset !== null ? savedWaveOffset === 'true' : true;
 	colorWaveOffsetCheckbox = createCheckbox('Color Wave Offset', defaultWaveOffset);
 	colorWaveOffsetCheckbox.position(10, yPos);
-	colorWaveOffsetCheckbox.style('color', 'white');
-	colorWaveOffsetCheckbox.style('font-family', 'monospace');
+	colorWaveOffsetCheckbox.addClass('ui-checkbox');
 	colorWaveOffsetCheckbox.changed(() => {
 		storeItem('colorWaveOffset', colorWaveOffsetCheckbox.checked().toString());
 	});
@@ -366,25 +340,21 @@ function setup() {
 	let defaultFilledCircles = savedFilledCircles !== null ? savedFilledCircles === 'true' : false;
 	filledCirclesCheckbox = createCheckbox('Filled Circles', defaultFilledCircles);
 	filledCirclesCheckbox.position(10, yPos);
-	filledCirclesCheckbox.style('color', 'white');
-	filledCirclesCheckbox.style('font-family', 'monospace');
+	filledCirclesCheckbox.addClass('ui-checkbox');
 	filledCirclesCheckbox.changed(() => {
 		storeItem('filledCircles', filledCirclesCheckbox.checked().toString());
 	});
 	
 	yPos += 20;
-	// Add seek slider for audio navigation
-	seekSlider = createSlider(0, 100, 0, 0.1);
-	seekSlider.position(10, yPos);
-	seekSlider.style('width', '180px');
-	seekSlider.input(() => {
-		if (song && song.isLoaded()) {
-			let seekTime = (seekSlider.value() / 100) * song.duration();
-			song.jump(seekTime);
-			if (analyzeSong && analyzeSong.isLoaded()) {
-				analyzeSong.jump(seekTime);
-			}
-		}
+	// Add transparent background checkbox
+	let savedTransparentBg = getItem('transparentBg');
+	let defaultTransparentBg = savedTransparentBg !== null ? savedTransparentBg === 'true' : false;
+	transparentBgCheckbox = createCheckbox('Transparent Background', defaultTransparentBg);
+	transparentBgCheckbox.position(10, yPos);
+	transparentBgCheckbox.addClass('ui-checkbox');
+	transparentBgCheckbox.changed(() => {
+		storeItem('transparentBg', transparentBgCheckbox.checked().toString());
+		updateUIColors();
 	});
 	
 	
@@ -398,6 +368,7 @@ function setup() {
 	uiElements.push(audioReactiveSizeCheckbox);
 	uiElements.push(colorWaveOffsetCheckbox);
 	uiElements.push(filledCirclesCheckbox);
+	uiElements.push(transparentBgCheckbox);
 	uiElements.push(seekSlider);
 	uiElements.push(recordButton);
 	for (let name in sliders) {
@@ -410,10 +381,17 @@ function setup() {
 	// Check for saved audio and font
 	loadSavedAudio();
 	loadSavedFont();
+	
+	// Apply initial UI colors based on transparent background setting
+	updateUIColors();
 }
 
 function draw() {
-	background(0)
+	if (transparentBgCheckbox.checked()) {
+		clear();
+	} else {
+		background(0);
+	}
 	
 	// Apply pan and zoom transformations
 	push();
@@ -675,7 +653,7 @@ function handleFontFile(file) {
 }
 
 // Toggle UI visibility
-function toggleUI(toggleButton) {
+function toggleUI(btn) {
 	uiVisible = !uiVisible;
 	for (let element of uiElements) {
 		if (uiVisible && element.elt.type !== 'file') {
@@ -686,7 +664,19 @@ function toggleUI(toggleButton) {
 		}
 	}
 	// Update button text
-	toggleButton.html(uiVisible ? '▼' : '▲');
+	btn.html(uiVisible ? '▼' : '▲');
+}
+
+// Update UI colors based on transparent background setting
+function updateUIColors() {
+	let isTransparent = transparentBgCheckbox.checked();
+	
+	// Toggle transparent-mode class on parent container - CSS cascades to all children
+	if (isTransparent) {
+		uiContainer.addClass('transparent-mode');
+	} else {
+		uiContainer.removeClass('transparent-mode');
+	}
 }
 
 // Create slider with label - generalized function
@@ -699,7 +689,7 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 	// Create slider
 	sliders[name] = createSlider(min, max, savedValue, step);
 	sliders[name].position(10, yPos);
-	sliders[name].style('width', '130px');
+	sliders[name].addClass('ui-slider');
 	sliders[name].input(() => {
 		saveSliderValue(name + 'slider', sliders[name].value());
 		updateLabels(); // Update labels on input
@@ -710,8 +700,7 @@ function createSliderWithLabel(name, label, min, max, defaultValue, step, yPos, 
 	labels[name] = createDiv(label + ': ' + savedValue);
 	labels[name].attribute('x-label', label);
 	labels[name].position(150, yPos + 4);
-	labels[name].style('color', 'white');
-	labels[name].style('font-family', 'monospace');
+	labels[name].addClass('ui-label');
 }
 
 // Update all labels in real-time
