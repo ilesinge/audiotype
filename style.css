@@ -56,6 +56,22 @@ canvas {
   display: none;
   z-index: 1000;
 }
+.ui-infobox hr {
+  border: 0.5px solid #999;
+}
+.ui-infobox h3 {
+  margin-top: 0;
+}
+.ui-infobox ul {
+  padding-left: 20px;
+  margin: 5px 0;
+}
+.ui-infobox a {
+  color: #888;
+}
+.ui-infobox p:last-child {
+  margin-bottom: 0;
+}
 
 /* Text input */
 .ui-textarea {
@@ -76,47 +92,6 @@ canvas {
   font-family: monospace;
   width: 40px;
 }
-
-/* Seekbar */
-/*
-.seekbar {
-  width: 180px;
-  height: 8px;
-  -webkit-appearance: none;
-  appearance: none;
-  border-radius: 4px;
-  cursor: pointer;
-  outline: none;
-  background: linear-gradient(to right, #fff 0%, #555 0%);
-}
-
-.seekbar::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
-  margin-top: 0;
-}
-
-.seekbar::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 50%;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 0 4px rgba(0,0,0,0.5);
-}
-
-.seekbar::-moz-range-track {
-  height: 8px;
-  border-radius: 4px;
-  background: transparent;
-}*/
 
 /* Transparent mode overrides - applied to parent container */
 .ui-container.transparent-mode .ui-toggle {

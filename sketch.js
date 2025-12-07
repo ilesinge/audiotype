@@ -104,25 +104,25 @@ function setup() {
 		.join(' • ');
 	
 	infoBox = createDiv(`
-		<h3 style="margin-top:0;">Audiotype</h3>
+		<h3>Audiotype</h3>
 		<p>Audio-reactive tricolor typography</p>
-		<hr style="border-color:#555;">
+		<hr>
 		<p><b>Controls:</b></p>
-		<ul style="padding-left:20px; margin:5px 0;">
+		<ul>
 			<li>Drag to pan</li>
 			<li>Scroll to zoom</li>
 			<li>Mess with the values</li>
 		</ul>
 		<p><b>Tips:</b></p>
-		<ul style="padding-left:20px; margin:5px 0;">
+		<ul>
 			<li>Upload MP3 for audio reactivity</li>
 			<li>Upload custom OTF/TTF fonts</li>
 		</ul>
-		<hr style="border-color:#555;">
-		<p style="font-size:11px;">Fonts distributed by <a href="https://velvetyne.fr/" target="_blank" style="color:#888;">Velvetyne</a>:<br/>
-		${fontCredits}</p>
-		<hr style="border-color:#555;">
-		<p style="margin-bottom:0; font-size:11px;">by ilesinge · <a href="https://github.com/ilesinge/audiotype" target="_blank" style="color:#888;">source</a></p>
+		<hr>
+		<p><small>Fonts distributed by <a href="https://velvetyne.fr/">Velvetyne</a>:<br/>
+		${fontCredits}</small></p>
+		<hr>
+		<p><small>by ilesinge · <a href="https://github.com/ilesinge/audiotype">source</a></small></p>
 	`);
 	infoBox.position(windowWidth - 270, 45);
 	infoBox.addClass('ui-infobox');
@@ -245,7 +245,7 @@ function setup() {
 	createSliderWithLabel('alpha', 'Alpha', 0, 1, 0.5, 0.01, yPos);
 
 	// Initialize FFT for frequency analysis (128 bins for lower latency)
-	fft = new p5.FFT(0.8, 128);
+	fft = new p5.FFT(sliders.audiosmooth.value(), 128);
 	
 	yPos += 30;
 	// Add file upload button for audio
@@ -398,7 +398,7 @@ function draw() {
 	translate(panX, panY);
 	scale(zoomLevel);
 	
-	// Cache checkbox states (optimization #2)
+	// Cache checkbox states
 	let isAudioReactiveStroke = audioReactiveStrokeCheckbox.checked();
 	let isAudioReactiveSize = audioReactiveSizeCheckbox.checked();
 	let isColorWaveOffset = colorWaveOffsetCheckbox.checked();
@@ -671,7 +671,7 @@ function toggleUI(btn) {
 function updateUIColors() {
 	let isTransparent = transparentBgCheckbox.checked();
 	
-	// Toggle transparent-mode class on parent container - CSS cascades to all children
+	// Toggle transparent-mode class on parent container
 	if (isTransparent) {
 		uiContainer.addClass('transparent-mode');
 	} else {
@@ -831,7 +831,7 @@ function startRecording() {
 	
 	// Use p5.js saveGif function
 	// Record at reduced resolution to keep file size manageable
-	saveGif('plgrnd-wave', framesNeeded / 30, {
+	saveGif('audiotype', framesNeeded / 30, {
 		delay: 0,
 		units: 'seconds',
 		notificationDuration: 2
