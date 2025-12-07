@@ -1,3 +1,5 @@
+- really transparent gif (like https://github.com/tapioca24/p5.capture)
+
 BONUS
 - more fonts (see velvetyne friends)
 - "shuffle" or reorder colors in the palette
