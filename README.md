@@ -1,6 +1,6 @@
 # Audiotype
 
-Audio-reactive tricolor typography.
+Audio-reactive tricolor typography
 
 ![Audiotype](ok.gif)
 
@@ -11,12 +11,15 @@ Audio-reactive tricolor typography.
 - Drag to pan
 - Scroll to zoom
 - Mess with the sliders
-- Upload your MP3
+- Upload a MP3 and press play
+- Upload a custom font
 - Record a GIF
+
+Note: no uploaded file (audio or font) are retained, as they technically stay on your computer.
 
 ## With
 
-- [p5.js](https://p5js.org/)
+- [p5.js](https://p5js.org/) including p5-sound
 
 ## Fonts
 
