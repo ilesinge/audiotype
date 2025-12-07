@@ -471,17 +471,17 @@ function draw() {
 		treble = fft.getEnergy(2000, 14000);
 		
 		// Map values to desired range
-		bass = map(bass, 0, 255, 50, 255);
-		mid = map(mid, 0, 255, 50, 255);
+		bass = map(bass, 50, 255, 0, 255);
+		mid = map(mid, 50, 255, 0, 255);
 		// Boost high frequencies as they tend to have lower energy
-		treble = map(treble, 0, 180, 50, 255);
+		treble = map(treble, 50, 180, 0, 255);
 		
 		// Apply quantization if enabled
 		let quantizeBins = sliders.quantize.value();
 		if (quantizeBins > 0) {
-			bass = quantizeValue(bass, 50, 255, quantizeBins);
-			mid = quantizeValue(mid, 50, 255, quantizeBins);
-			treble = quantizeValue(treble, 50, 255, quantizeBins);
+			bass = quantizeValue(bass, 0, 255, quantizeBins);
+			mid = quantizeValue(mid, 0, 255, quantizeBins);
+			treble = quantizeValue(treble, 0, 255, quantizeBins);
 		}
 	} else {
 		// Default colors when audio is not playing or checkbox unchecked
