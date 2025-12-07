@@ -1,6 +1,6 @@
 let fonts = {}
 let builtInFonts = {
-	'Compagnon': { file: 'fonts/Compagnon-Roman.otf', credit: 'Juliette Duhé, Léa Pradine, Valentin Papon, Chloé Lozano, Sébastien Riollier' },
+	'Compagnon Roman': { file: 'fonts/Compagnon-Roman.otf', credit: 'Juliette Duhé & Léa Pradine' },
 	'Interlope': { file: 'fonts/Interlope-Regular.otf', credit: 'Gabriel Dubourg' },
 	'Karrik': { file: 'fonts/Karrik-Regular.otf', credit: 'Jean-Baptiste Morizot & Lucas Le Bihan' },
 	'Mess': { file: 'fonts/Mess.otf', credit: 'Tezzo Suzuki' },
@@ -51,12 +51,12 @@ function preload() {
 	}
 	// Load saved font or default to compagnon
 	let savedFont = getItem('selectedFont');
-	let fontName = savedFont !== null ? savedFont : 'Compagnon';
+	let fontName = savedFont !== null ? savedFont : 'Compagnon Roman';
 	
 	// If the saved font is not one of the preloaded ones, fallback to compagnon
 	// The custom font will be loaded in setup() via loadSavedFont()
 	if (!fonts[fontName]) {
-		fontName = 'Compagnon';
+		fontName = 'Compagnon Roman';
 	}
 	font = fonts[fontName];
 }

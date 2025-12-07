@@ -22,7 +22,7 @@ Audio-reactive tricolor typography.
 
 All fonts from [Velvetyne](https://velvetyne.fr/) 🖤
 
-- **Compagnon** by Juliette Duhé, Léa Pradine, Valentin Papon, Chloé Lozano, Sébastien Riollier
+- **Compagnon Roman** by Juliette Duhé & Léa Pradine
 - **Interlope** by Gabriel Dubourg
 - **Karrik** by Jean-Baptiste Morizot & Lucas Le Bihan
 - **Mess** by Tezzo Suzuki

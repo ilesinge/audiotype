@@ -1,6 +1,3 @@
-- Adjust sound reactivity power
-- publish repo
-
 BONUS
 - more fonts (see velvetyne friends)
 - "shuffle" or reorder colors in the palette
