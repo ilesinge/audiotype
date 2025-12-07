@@ -2,6 +2,7 @@
 - publish repo
 
 BONUS
+- more fonts (see velvetyne friends)
 - "shuffle" or reorder colors in the palette
 - Save to URL params / or button to copy preset (URL)
 - save as mp4 for embedding sound

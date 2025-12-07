@@ -230,6 +230,8 @@ function setup() {
 	yPos += 25;
 	createSliderWithLabel('textsize', 'Text Size', 1, 20, 2, 0.1, yPos, genType);
 	yPos += 25;
+	createSliderWithLabel('lineheight', 'Line Height', 0.5, 2, 0.9, 0.01, yPos, genType);
+	yPos += 25;
 	createSliderWithLabel('colorsep', 'Color Separation', 0.1, 20, 4, 0.1, yPos);
 	yPos += 25;
 	createSliderWithLabel('strokeweight', 'Stroke Weight', 0.1, 5, 1, 0.1, yPos);
@@ -587,7 +589,7 @@ function genType() {
 	if (!font) return;
 	
 	txtSize = width / 16 * sliders.textsize.value()
-	let lineSpacing = txtSize * 0.9;
+	let lineSpacing = txtSize * sliders.lineheight.value();
 	
 	// Split text by actual newlines (from textarea)
 	let texts = currentText.split('\n');
