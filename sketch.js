@@ -118,13 +118,14 @@ function setup() {
 			<li>Upload MP3 for audio reactivity</li>
 			<li>Upload custom OTF/TTF fonts</li>
 		</ul>
+		(both stay on your computer)
 		<hr>
 		<p><small>Fonts distributed by <a href="https://velvetyne.fr/">Velvetyne</a>:<br/>
 		${fontCredits}</small></p>
 		<hr>
 		<p><small>by ilesinge · <a href="https://github.com/ilesinge/audiotype">source</a></small></p>
 	`);
-	infoBox.position(windowWidth - 270, 45);
+	infoBox.position(windowWidth - 290, 45);
 	infoBox.addClass('ui-infobox');
 	
 	helpButton.mousePressed(() => {
@@ -808,7 +809,7 @@ function windowResized() {
 	genType(); // Regenerate text points for new canvas size
 	// Reposition help button and info box
 	if (helpButton) helpButton.position(windowWidth - 30, 10);
-	if (infoBox) infoBox.position(windowWidth - 270, 45);
+	if (infoBox) infoBox.position(windowWidth - 290, 45);
 }
 
 // Start recording a GIF for one complete sine wavelength

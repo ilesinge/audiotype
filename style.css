@@ -52,7 +52,7 @@ canvas {
   padding: 15px;
   font-family: monospace;
   font-size: 12px;
-  width: 230px;
+  width: 250px;
   display: none;
   z-index: 1000;
 }
