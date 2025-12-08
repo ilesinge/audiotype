@@ -153,6 +153,9 @@ canvas {
   background-color: #999;
 }
 
+.ui-seekbar {
+  width: 200px;
+}
 
 /* Hidden file inputs */
 .ui-hidden {

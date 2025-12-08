@@ -291,7 +291,7 @@ function setup() {
 	// Add seek slider for audio navigation (below play button)
 	seekSlider = createSlider(0, 100, 0, 0.1);
 	seekSlider.position(10, yPos);
-	seekSlider.addClass('ui-slider');
+	seekSlider.addClass('ui-slider ui-seekbar');
 	seekSlider.input(() => {
 		if (song && song.isLoaded()) {
 			let seekTime = (seekSlider.value() / 100) * song.duration();
@@ -737,10 +737,23 @@ function quantizeValue(value, minVal, maxVal, numBins) {
 	return minVal + (binIndex + 0.5) * binSize;
 }
 
+// Check if mouse is over infobox
+function isMouseOverInfobox() {
+	if (!infoBox || infoBox.style('display') === 'none') {
+		return false;
+	}
+	let infoBoxX = windowWidth - 290;
+	let infoBoxY = 45;
+	let infoBoxWidth = 250;
+	let infoBoxHeight = 410; // Approximate height
+	return mouseX >= infoBoxX && mouseX <= infoBoxX + infoBoxWidth &&
+	       mouseY >= infoBoxY && mouseY <= infoBoxY + infoBoxHeight;
+}
+
 // Mouse pressed - start dragging if not over UI
 function mousePressed() {
-	// Don't pan if UI is visible and mouse is over UI area
-	if (uiVisible && mouseX < 250) {
+	// Don't pan if UI is visible and mouse is over UI area or infobox
+	if ((uiVisible && mouseX < 250 && mouseY < 700) || isMouseOverInfobox()) {
 		return; // Let UI handle the interaction
 	}
 	isDragging = true;
@@ -770,8 +783,8 @@ function mouseReleased() {
 
 // Mouse wheel - zoom in/out
 function mouseWheel(event) {
-	// Don't zoom if UI is visible and mouse is over UI area
-	if (uiVisible && mouseX < 250 && mouseY < 350) {
+	// Don't zoom if UI is visible and mouse is over UI area or infobox
+	if ((uiVisible && (mouseX < 250 && mouseY < 350)) || isMouseOverInfobox()) {
 		return; // Let UI handle the interaction
 	}
 	
