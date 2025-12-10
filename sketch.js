@@ -350,7 +350,7 @@ function setup() {
 	// Add transparent background checkbox
 	let savedTransparentBg = getItem('transparentBg');
 	let defaultTransparentBg = savedTransparentBg !== null ? savedTransparentBg === 'true' : false;
-	transparentBgCheckbox = createCheckbox('Transparent Background', defaultTransparentBg);
+	transparentBgCheckbox = createCheckbox('Day Mode', defaultTransparentBg);
 	transparentBgCheckbox.position(10, yPos);
 	transparentBgCheckbox.addClass('ui-checkbox');
 	transparentBgCheckbox.changed(() => {
@@ -850,7 +850,7 @@ function startRecording() {
 		units: 'seconds',
 		notificationDuration: 2
 	});
-	
+
 	// Reset recording state after duration
 	setTimeout(() => {
 		isRecording = false;
