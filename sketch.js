@@ -266,21 +266,7 @@ function setup() {
 	playButton = createButton('▶');
 	playButton.position(10, yPos);
 	playButton.addClass('ui-play');
-	playButton.mousePressed(() => {
-		if (song && song.isLoaded()) {
-			if (song.isPlaying()) {
-				song.pause();
-				playButton.html('▶');
-				if (analyzeSong && analyzeSong.isLoaded()) {
-					analyzeSong.pause();
-				}
-			} else {
-				song.loop();
-				playButton.html('❚❚');
-				// analyzeSong will sync in draw()
-			}
-		}
-	});
+	playButton.mousePressed(togglePlayPause);
 
 	// Add label for audio filename
 	audioNameLabel = createDiv('');
@@ -759,6 +745,37 @@ function mousePressed() {
 	isDragging = true;
 	lastMouseX = mouseX;
 	lastMouseY = mouseY;
+}
+
+// Toggle play/pause state
+function togglePlayPause() {
+	if (song && song.isLoaded()) {
+		if (song.isPlaying()) {
+			song.pause();
+			playButton.html('▶');
+			if (analyzeSong && analyzeSong.isLoaded()) {
+				analyzeSong.pause();
+			}
+		} else {
+			song.loop();
+			playButton.html('❚❚');
+		}
+	}
+}
+
+// Keyboard shortcuts
+function keyPressed() {
+	// Ignore if focus is on an input element (textarea, input, etc.)
+	if (document.activeElement.tagName === 'TEXTAREA' || 
+	    document.activeElement.tagName === 'INPUT') {
+		return;
+	}
+	
+	// Spacebar for play/pause
+	if (key === ' ') {
+		togglePlayPause();
+		return false; // Prevent default scrolling
+	}
 }
 
 // Mouse dragged - pan the view
