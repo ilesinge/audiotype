@@ -28,7 +28,7 @@ let fontSelect
 let paletteSelect
 let audioNameLabel
 let playButton, fontUploadTrigger, audioUploadTrigger
-let helpButton, infoBox, toggleButton
+let helpButton, infoBox, toggleButton, shareButton
 let colorPalettes = {
 	'RGB': [[255, 0, 0], [0, 255, 0], [0, 0, 255]], // #FF0000 #00FF00 #0000FF
 	'Monochrome': [[255, 255, 255], [150, 150, 150], [75, 75, 75]], // #FFFFFF #969696 #4B4B4B
@@ -91,6 +91,12 @@ function setup() {
 	toggleButton.position(10, 10);
 	toggleButton.addClass('ui-toggle');
 	toggleButton.mousePressed(() => toggleUI(toggleButton));
+	
+	// Add share button in top right
+	shareButton = createButton('⎘');
+	shareButton.position(windowWidth - 60, 10);
+	shareButton.addClass('ui-help');
+	shareButton.mousePressed(copyPresetToClipboard);
 	
 	// Add help button in top right
 	helpButton = createButton('?');
@@ -364,6 +370,9 @@ function setup() {
 	}
 
 	genType()
+	
+	// Load parameters from URL if present
+	loadParametersFromURL();
 	
 	// Check for saved audio and font
 	loadSavedAudio();
@@ -837,7 +846,8 @@ function mouseWheel(event) {
 function windowResized() {
 	resizeCanvas(windowWidth, windowHeight);
 	genType(); // Regenerate text points for new canvas size
-	// Reposition help button and info box
+	// Reposition share button, help button and info box
+	if (shareButton) shareButton.position(windowWidth - 60, 10);
 	if (helpButton) helpButton.position(windowWidth - 30, 10);
 	if (infoBox) infoBox.position(windowWidth - 290, 45);
 }
@@ -1036,5 +1046,148 @@ async function loadSavedFont() {
 			storeItem('selectedFont', fontName);
 			genType();
 		});
+	}
+}
+
+// Copy preset as URL to clipboard
+function copyPresetToClipboard() {
+	let params = new URLSearchParams();
+	
+	// Add all slider values
+	for (let name in sliders) {
+		params.set(name, sliders[name].value());
+	}
+	
+	// Add checkbox values
+	params.set('audioReactiveStroke', audioReactiveStrokeCheckbox.checked());
+	params.set('audioReactiveSize', audioReactiveSizeCheckbox.checked());
+	params.set('colorWaveOffset', colorWaveOffsetCheckbox.checked());
+	params.set('filledCircles', filledCirclesCheckbox.checked());
+	params.set('transparentBg', transparentBgCheckbox.checked());
+	
+	// Add palette selection
+	params.set('palette', paletteSelect.value());
+	
+	// Add font selection (only if it's a built-in font)
+	let selectedFont = fontSelect.value();
+	if (builtInFonts[selectedFont]) {
+		params.set('font', selectedFont);
+	}
+	
+	// Add text content
+	params.set('text', currentText);
+	
+	// Add pan and zoom values
+	params.set('panX', panX.toFixed(2));
+	params.set('panY', panY.toFixed(2));
+	params.set('zoom', zoomLevel.toFixed(2));
+	
+	// Create the URL with query parameters
+	let url = window.location.origin + window.location.pathname + '?' + params.toString();
+	
+	// Copy to clipboard
+	navigator.clipboard.writeText(url).then(() => {
+		// Visual feedback - change button temporarily
+		let originalText = shareButton.html();
+		shareButton.html('✓');
+		setTimeout(() => {
+			shareButton.html(originalText);
+		}, 2000);
+	}).catch(err => {
+		console.error('Failed to copy to clipboard:', err);
+		alert('Failed to copy to clipboard. Please copy manually:\n' + url);
+	});
+}
+
+// Load parameters from URL query string
+function loadParametersFromURL() {
+	let params = new URLSearchParams(window.location.search);
+	
+	if (params.toString() === '') {
+		return; // No URL parameters
+	}
+	
+	// Load slider values
+	for (let name in sliders) {
+		if (params.has(name)) {
+			let value = parseFloat(params.get(name));
+			sliders[name].value(value);
+			saveSliderValue(name + 'slider', value);
+		}
+	}
+	
+	// Load checkbox values
+	if (params.has('audioReactiveStroke')) {
+		let value = params.get('audioReactiveStroke') === 'true';
+		audioReactiveStrokeCheckbox.checked(value);
+		storeItem('audioReactiveStroke', value.toString());
+	}
+	if (params.has('audioReactiveSize')) {
+		let value = params.get('audioReactiveSize') === 'true';
+		audioReactiveSizeCheckbox.checked(value);
+		storeItem('audioReactiveSize', value.toString());
+	}
+	if (params.has('colorWaveOffset')) {
+		let value = params.get('colorWaveOffset') === 'true';
+		colorWaveOffsetCheckbox.checked(value);
+		storeItem('colorWaveOffset', value.toString());
+	}
+	if (params.has('filledCircles')) {
+		let value = params.get('filledCircles') === 'true';
+		filledCirclesCheckbox.checked(value);
+		storeItem('filledCircles', value.toString());
+	}
+	if (params.has('transparentBg')) {
+		let value = params.get('transparentBg') === 'true';
+		transparentBgCheckbox.checked(value);
+		storeItem('transparentBg', value.toString());
+		updateUIColors();
+	}
+	
+	// Load palette selection
+	if (params.has('palette')) {
+		let palette = params.get('palette');
+		if (colorPalettes[palette]) {
+			paletteSelect.selected(palette);
+			storeItem('selectedPalette', palette);
+		}
+	}
+	
+	// Load font selection (only built-in fonts)
+	if (params.has('font')) {
+		let fontName = params.get('font');
+		if (builtInFonts[fontName]) {
+			fontSelect.selected(fontName);
+			font = fonts[fontName];
+			storeItem('selectedFont', fontName);
+		}
+	}
+	
+	// Load text content
+	if (params.has('text')) {
+		let text = params.get('text');
+		textInput.value(text);
+		currentText = text;
+		storeItem('textContent', text);
+	}
+	
+	// Load pan and zoom values
+	if (params.has('panX')) {
+		panX = parseFloat(params.get('panX'));
+		storeItem('panX', panX);
+	}
+	if (params.has('panY')) {
+		panY = parseFloat(params.get('panY'));
+		storeItem('panY', panY);
+	}
+	if (params.has('zoom')) {
+		zoomLevel = parseFloat(params.get('zoom'));
+		storeItem('zoomLevel', zoomLevel);
+	}
+	
+	// Update labels and regenerate text (only if font is loaded)
+	updateLabels();
+	if (font) {
+		genType();
 	}
 }
