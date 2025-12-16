@@ -28,7 +28,7 @@ let fontSelect
 let paletteSelect
 let audioNameLabel
 let playButton, fontUploadTrigger, audioUploadTrigger
-let helpButton, shareButton, infoBox, toggleButton
+let helpButton, shareButton, randomizeButton, infoBox, toggleButton
 let urlPresetActive = false
 let urlPresetFontName = null
 let colorPalettes = {
@@ -98,6 +98,13 @@ function setup() {
 	helpButton = createButton('?');
 	helpButton.position(windowWidth - 30, 10);
 	helpButton.addClass('ui-help');
+
+	// Add randomize button in top right
+	randomizeButton = createButton('↻');
+	randomizeButton.position(windowWidth - 90, 10);
+	randomizeButton.addClass('ui-help');
+	randomizeButton.attribute('title', 'Randomize visual settings');
+	randomizeButton.mousePressed(randomizeVisualControls);
 
 	// Add share/copy button in top right
 	shareButton = createButton('⧉');
@@ -861,7 +868,103 @@ function windowResized() {
 	// Reposition help button and info box
 	if (helpButton) helpButton.position(windowWidth - 30, 10);
 	if (shareButton) shareButton.position(windowWidth - 60, 10);
+	if (randomizeButton) randomizeButton.position(windowWidth - 90, 10);
 	if (infoBox) infoBox.position(windowWidth - 290, 45);
+}
+
+function randomizeVisualControls() {
+	// Visual controls only:
+	// - Sliders + visual toggles + palette/font selects
+	// - No pan/zoom
+	// - No playback controls
+	// - No day/transparent mode toggle
+	// - No text changes
+
+	function randBetween(min, max) {
+		return min + Math.random() * (max - min);
+	}
+
+	function setSliderRandom(name) {
+		if (!sliders[name]) return;
+		let elt = sliders[name].elt;
+		let min = parseFloat(elt.min);
+		let max = parseFloat(elt.max);
+		let step = parseFloat(elt.step);
+		if (!Number.isFinite(min) || !Number.isFinite(max)) return;
+		if (!Number.isFinite(step) || step <= 0) step = 0;
+
+		let value = randBetween(min, max);
+		if (step > 0) {
+			value = Math.round((value - min) / step) * step + min;
+		}
+		value = constrain(value, min, max);
+		// Avoid float artifacts when step is fractional
+		if (step > 0) {
+			let decimals = (step.toString().split('.')[1] || '').length;
+			value = parseFloat(value.toFixed(decimals));
+		}
+
+		sliders[name].value(value);
+		saveSliderValue(name + 'slider', value);
+	}
+
+	// Randomize sliders (visuals only)
+	let sliderKeys = [
+		'factor', 'size', 'sinsize', 'sinwidth', 'sinspeed',
+		'textsize', 'lineheight', 'colorsep', 'strokeweight',
+		'audiosmooth', 'timeoffset', 'strokepower', 'sizepower',
+		'quantize', 'alpha'
+	];
+	for (let key of sliderKeys) setSliderRandom(key);
+
+	// Randomize visual toggles (exclude transparentBg/day mode)
+	if (audioReactiveStrokeCheckbox) {
+		let v = Math.random() < 0.5;
+		audioReactiveStrokeCheckbox.checked(v);
+		storeItem('audioReactiveStroke', v.toString());
+	}
+	if (audioReactiveSizeCheckbox) {
+		let v = Math.random() < 0.5;
+		audioReactiveSizeCheckbox.checked(v);
+		storeItem('audioReactiveSize', v.toString());
+	}
+	if (colorWaveOffsetCheckbox) {
+		let v = Math.random() < 0.5;
+		colorWaveOffsetCheckbox.checked(v);
+		storeItem('colorWaveOffset', v.toString());
+	}
+	if (filledCirclesCheckbox) {
+		let v = Math.random() < 0.5;
+		filledCirclesCheckbox.checked(v);
+		storeItem('filledCircles', v.toString());
+	}
+
+	// Randomize palette
+	if (paletteSelect) {
+		let paletteOptions = Object.keys(colorPalettes);
+		if (paletteOptions.length > 0) {
+			let choice = random(paletteOptions);
+			paletteSelect.selected(choice);
+			storeItem('selectedPalette', choice);
+		}
+	}
+
+	// Randomize font
+	if (fontSelect) {
+		let options = [];
+		for (let i = 0; i < fontSelect.elt.options.length; i++) {
+			options.push(fontSelect.elt.options[i].value);
+		}
+		if (options.length > 0) {
+			let choice = random(options);
+			fontSelect.selected(choice);
+			if (fonts[choice]) font = fonts[choice];
+			storeItem('selectedFont', choice);
+		}
+	}
+
+	updateLabels();
+	genType();
 }
 
 function getPresetFromUrl() {
