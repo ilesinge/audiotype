@@ -28,7 +28,9 @@ let fontSelect
 let paletteSelect
 let audioNameLabel
 let playButton, fontUploadTrigger, audioUploadTrigger
-let helpButton, infoBox, toggleButton
+let helpButton, shareButton, infoBox, toggleButton
+let urlPresetActive = false
+let urlPresetFontName = null
 let colorPalettes = {
 	'RGB': [[255, 0, 0], [0, 255, 0], [0, 0, 255]], // #FF0000 #00FF00 #0000FF
 	'Monochrome': [[255, 255, 255], [150, 150, 150], [75, 75, 75]], // #FFFFFF #969696 #4B4B4B
@@ -96,6 +98,13 @@ function setup() {
 	helpButton = createButton('?');
 	helpButton.position(windowWidth - 30, 10);
 	helpButton.addClass('ui-help');
+
+	// Add share/copy button in top right
+	shareButton = createButton('⧉');
+	shareButton.position(windowWidth - 60, 10);
+	shareButton.addClass('ui-help');
+	shareButton.attribute('title', 'Copy preset URL');
+	shareButton.mousePressed(copyPresetUrlToClipboard);
 	
 	// Create info box (hidden by default)
 	// Generate font credits from builtInFonts
@@ -138,7 +147,10 @@ function setup() {
 	
 	// Add color palette selector
 	let savedPalette = getItem('selectedPalette');
-	let paletteName = savedPalette !== null ? savedPalette : 'Vaporwave';
+	let presetFromUrl = getPresetFromUrl();
+	urlPresetActive = !!presetFromUrl;
+	urlPresetFontName = presetFromUrl?.font ?? null;
+	let paletteName = presetFromUrl?.palette ?? (savedPalette !== null ? savedPalette : 'Vaporwave');
 	paletteSelect = createSelect();
 	for (let name in colorPalettes) {
 		paletteSelect.option(name);
@@ -152,7 +164,7 @@ function setup() {
 
 	// Add font selector
 	let savedFont = getItem('selectedFont');
-	let fontName = savedFont !== null ? savedFont : 'compagnon';
+	let fontName = presetFromUrl?.font ?? (savedFont !== null ? savedFont : 'compagnon');
 	fontSelect = createSelect();
 	// Add built-in fonts
 	for (let name in builtInFonts) {
@@ -206,7 +218,11 @@ function setup() {
 	});
 	// Load saved text or use default
 	let savedText = getItem('textContent');
-	if (savedText !== null) {
+	let textFromUrl = presetFromUrl?.text;
+	if (typeof textFromUrl === 'string') {
+		textInput.value(textFromUrl);
+		currentText = textFromUrl;
+	} else if (savedText !== null) {
 		textInput.value(savedText);
 		currentText = savedText;
 	} else {
@@ -361,6 +377,11 @@ function setup() {
 	for (let name in sliders) {
 		uiElements.push(sliders[name]);
 		uiElements.push(labels[name]);
+	}
+
+	// Apply preset from URL (visuals only) after controls exist
+	if (presetFromUrl) {
+		applyPresetFromUrl(presetFromUrl);
 	}
 
 	genType()
@@ -839,7 +860,174 @@ function windowResized() {
 	genType(); // Regenerate text points for new canvas size
 	// Reposition help button and info box
 	if (helpButton) helpButton.position(windowWidth - 30, 10);
+	if (shareButton) shareButton.position(windowWidth - 60, 10);
 	if (infoBox) infoBox.position(windowWidth - 290, 45);
+}
+
+function getPresetFromUrl() {
+	let params = new URLSearchParams(window.location.search);
+
+	// If none of our known keys exist, treat as no preset
+	let hasAny = false;
+	let sliderKeys = [
+		'factor', 'size', 'sinsize', 'sinwidth', 'sinspeed',
+		'textsize', 'lineheight', 'colorsep', 'strokeweight',
+		'audiosmooth', 'timeoffset', 'strokepower', 'sizepower',
+		'quantize', 'alpha'
+	];
+	for (let key of ['palette', 'font', 'text', 'audioReactiveStroke', 'audioReactiveSize', 'colorWaveOffset', 'filledCircles', 'transparentBg', ...sliderKeys]) {
+		if (params.has(key)) {
+			hasAny = true;
+			break;
+		}
+	}
+	if (!hasAny) return null;
+
+	let preset = {
+		sliders: {},
+		checkboxes: {},
+		palette: null,
+		font: null,
+		text: null
+	};
+
+	if (params.has('palette')) preset.palette = params.get('palette');
+	if (params.has('font')) preset.font = params.get('font');
+	if (params.has('text')) preset.text = params.get('text');
+
+	for (let key of sliderKeys) {
+		if (!params.has(key)) continue;
+		let value = parseFloat(params.get(key));
+		if (!Number.isFinite(value)) continue;
+		preset.sliders[key] = value;
+	}
+
+	let boolKeys = ['audioReactiveStroke', 'audioReactiveSize', 'colorWaveOffset', 'filledCircles', 'transparentBg'];
+	for (let key of boolKeys) {
+		if (!params.has(key)) continue;
+		let raw = params.get(key);
+		preset.checkboxes[key] = raw === '1' || raw === 'true';
+	}
+
+	return preset;
+}
+
+function applyPresetFromUrl(preset) {
+	if (!preset) return;
+
+	// Selects
+	if (preset.palette && colorPalettes[preset.palette] && paletteSelect) {
+		paletteSelect.selected(preset.palette);
+		storeItem('selectedPalette', preset.palette);
+	}
+
+	if (preset.font && fonts[preset.font] && fontSelect) {
+		fontSelect.selected(preset.font);
+		font = fonts[preset.font];
+		storeItem('selectedFont', preset.font);
+	}
+
+	// Text
+	if (typeof preset.text === 'string' && textInput) {
+		textInput.value(preset.text);
+		currentText = preset.text;
+		storeItem('textContent', preset.text);
+	}
+
+	// Sliders
+	for (let name in preset.sliders) {
+		if (!sliders[name]) continue;
+		sliders[name].value(preset.sliders[name]);
+		saveSliderValue(name + 'slider', sliders[name].value());
+	}
+	updateLabels();
+
+	// Checkboxes
+	if (typeof preset.checkboxes.audioReactiveStroke === 'boolean' && audioReactiveStrokeCheckbox) {
+		audioReactiveStrokeCheckbox.checked(preset.checkboxes.audioReactiveStroke);
+		storeItem('audioReactiveStroke', preset.checkboxes.audioReactiveStroke.toString());
+	}
+	if (typeof preset.checkboxes.audioReactiveSize === 'boolean' && audioReactiveSizeCheckbox) {
+		audioReactiveSizeCheckbox.checked(preset.checkboxes.audioReactiveSize);
+		storeItem('audioReactiveSize', preset.checkboxes.audioReactiveSize.toString());
+	}
+	if (typeof preset.checkboxes.colorWaveOffset === 'boolean' && colorWaveOffsetCheckbox) {
+		colorWaveOffsetCheckbox.checked(preset.checkboxes.colorWaveOffset);
+		storeItem('colorWaveOffset', preset.checkboxes.colorWaveOffset.toString());
+	}
+	if (typeof preset.checkboxes.filledCircles === 'boolean' && filledCirclesCheckbox) {
+		filledCirclesCheckbox.checked(preset.checkboxes.filledCircles);
+		storeItem('filledCircles', preset.checkboxes.filledCircles.toString());
+	}
+	if (typeof preset.checkboxes.transparentBg === 'boolean' && transparentBgCheckbox) {
+		transparentBgCheckbox.checked(preset.checkboxes.transparentBg);
+		storeItem('transparentBg', preset.checkboxes.transparentBg.toString());
+		updateUIColors();
+	}
+}
+
+function buildPresetUrl() {
+	let params = new URLSearchParams();
+
+	// Selects
+	if (paletteSelect) params.set('palette', paletteSelect.value());
+	if (fontSelect) params.set('font', fontSelect.value());
+
+	// Text
+	if (textInput) params.set('text', textInput.value());
+
+	// Sliders (visuals only)
+	let sliderKeys = [
+		'factor', 'size', 'sinsize', 'sinwidth', 'sinspeed',
+		'textsize', 'lineheight', 'colorsep', 'strokeweight',
+		'audiosmooth', 'timeoffset', 'strokepower', 'sizepower',
+		'quantize', 'alpha'
+	];
+	for (let key of sliderKeys) {
+		if (!sliders[key]) continue;
+		params.set(key, String(sliders[key].value()));
+	}
+
+	// Checkboxes
+	if (audioReactiveStrokeCheckbox) params.set('audioReactiveStroke', audioReactiveStrokeCheckbox.checked() ? '1' : '0');
+	if (audioReactiveSizeCheckbox) params.set('audioReactiveSize', audioReactiveSizeCheckbox.checked() ? '1' : '0');
+	if (colorWaveOffsetCheckbox) params.set('colorWaveOffset', colorWaveOffsetCheckbox.checked() ? '1' : '0');
+	if (filledCirclesCheckbox) params.set('filledCircles', filledCirclesCheckbox.checked() ? '1' : '0');
+	if (transparentBgCheckbox) params.set('transparentBg', transparentBgCheckbox.checked() ? '1' : '0');
+
+	let baseUrl = (window.location.origin && window.location.origin !== 'null')
+		? `${window.location.origin}${window.location.pathname}`
+		: window.location.href.split('?')[0].split('#')[0];
+	return `${baseUrl}?${params.toString()}`;
+}
+
+async function copyPresetUrlToClipboard() {
+	let url = buildPresetUrl();
+	try {
+		if (navigator.clipboard && navigator.clipboard.writeText) {
+			await navigator.clipboard.writeText(url);
+		} else {
+			let textarea = document.createElement('textarea');
+			textarea.value = url;
+			textarea.setAttribute('readonly', '');
+			textarea.style.position = 'absolute';
+			textarea.style.left = '-9999px';
+			document.body.appendChild(textarea);
+			textarea.select();
+			document.execCommand('copy');
+			document.body.removeChild(textarea);
+		}
+
+		if (shareButton) {
+			let prev = shareButton.html();
+			shareButton.html('✓');
+			setTimeout(() => shareButton.html(prev), 750);
+		}
+	} catch (err) {
+		console.error('Failed to copy preset URL:', err);
+		// Fallback: show URL so user can manually copy
+		prompt('Copy preset URL:', url);
+	}
 }
 
 // Start recording a GIF for one complete sine wavelength
@@ -1030,11 +1218,21 @@ async function loadSavedFont() {
 				fontSelect.option(fontName);
 			}
 			
-			// Select and use the new font
-			fontSelect.selected(fontName);
-			font = loadedFont;
-			storeItem('selectedFont', fontName);
-			genType();
+			// Select/use the font only when appropriate:
+			// - If the URL preset explicitly requests this saved font, apply it.
+			// - Otherwise, only auto-select when no URL preset is active.
+			let shouldSelect = false;
+			if (urlPresetFontName && urlPresetFontName === fontName) {
+				shouldSelect = true;
+			} else if (!urlPresetActive) {
+				shouldSelect = true;
+			}
+			if (shouldSelect) {
+				fontSelect.selected(fontName);
+				font = loadedFont;
+				storeItem('selectedFont', fontName);
+				genType();
+			}
 		});
 	}
 }
